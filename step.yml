@@ -1,5 +1,5 @@
-name: "Certificate and profile installer"
-description: Downloads and installs the certificate and the mobile provisioning profiles
+title: "Certificate and profile installer"
+summary: Downloads and installs the certificate and the mobile provisioning profiles
 website: https://github.com/bitrise-io/steps-certificate-and-profile-installer
 fork_url: https://github.com/bitrise-io/steps-certificate-and-profile-installer
 source:
@@ -12,28 +12,25 @@ type_tags:
   - security
 is_requires_admin_user: false
 inputs:
-  - mapped_to: certificate_url
-    title: "Certificate URL"
-    description: |
+  - certificate_url:
+    opts:
+      title: "Certificate URL"
+      description: |
         URL of the certificate to download
-    is_required: true
-    is_expand: true
-    value: ""
-    is_dont_change_value: false
-  - mapped_to: certificate_passphrase
-    title: "Certificate passphrase"
-    description: |
-      Certificate passphrase
-    is_required: true
-    is_expand: false
-    value: ""
-    is_dont_change_value: false
-  - mapped_to: provisioning_profile_url
-    title: "Provisioning profile URL"
-    description: |
-      URL of the provisioning profile to download
-    is_required: true
-    is_expand: true
-    value: ""
-    is_dont_change_value: false
+      is_required: true
+      is_expand: true
+  - certificate_passphrase:
+    opts:
+      title: "Certificate passphrase"
+      description: |
+        Certificate passphrase
+      is_required: true
+      is_expand: false
+  - provisioning_profile_url:
+    opts:
+      title: "Provisioning profile URL"
+      description: |
+        URL of the provisioning profile to download
+      is_required: true
+      is_expand: true
 outputs: []
