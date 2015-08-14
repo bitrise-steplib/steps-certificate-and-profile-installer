@@ -4,9 +4,8 @@ set -e
 
 #
 # Init
-export provisioning_profile_dir="${HOME}/Library/MobileDevice/Provisioning Profiles"
-export temp_dir="${HOME}/tmp_dir"
-export keychain_name="bitrise.keychain"
+provisioning_profile_dir="${HOME}/Library/MobileDevice/Provisioning Profiles"
+temp_dir="${HOME}/tmp_dir"
 
 #
 # Required parameters
@@ -15,8 +14,13 @@ if [ -z "${certificate_url}" ] ; then
   exit 1
 fi
 
-if [ -z "${keychain_name}" ] ; then
-  echo "Missing required input: keychain_name"
+if [ -z "${keychain_path}" ] ; then
+  echo "Missing required input: keychain_path"
+  exit 1
+fi
+
+if [ -z "${keychain_password}" ] ; then
+  echo "Missing required input: keychain_password"
   exit 1
 fi
 
@@ -51,8 +55,8 @@ function download_file {
   local url="$2"
 
   curl -Lfso "${path}" "${url}"
-  result=$?
-  
+  local result=$?
+
   if [ ${result} -ne 0 ]; then
     echo " (i) Failed to download, retrying..."
     sleep 5
@@ -66,28 +70,31 @@ function download_file {
 }
 
 echo "Downloading certificate"
-export CERTIFICATE_PATH="${temp_dir}/Certificate.p12"
-download_file "${CERTIFICATE_PATH}" "${certificate_url}"
+certificate_path="${temp_dir}/Certificate.p12"
+download_file "${certificate_path}" "${certificate_url}"
+
 
 #
 # Install certificate
-echo "Creating keychain"
-export KEYCHAIN_PASSPHRASE="$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
 
-# Todo: check if exists
-security -v create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${keychain_name}"
-security -v import "${CERTIFICATE_PATH}" -k "${keychain_name}" -P "${certificate_passphrase}" -A
-security -v set-keychain-settings -lut 72000 "${keychain_name}"
-security -v list-keychains -s $(security -v list-keychains | tr -d '"') "${keychain_name}"
-security -v default-keychain -s "${keychain_name}"
-security -v unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${keychain_name}"
+if [ ! -f "${keychain_path}" ] ; then
+  echo "=> Creating keychain: ${keychain_path}"
+  security -v create-keychain -p "${keychain_password}" "${keychain_path}"
+fi
 
-export CERTIFICATE_IDENTITY=$(security find-certificate -a ${keychain_name} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | head -n 1)
-echo "Installed certificate: $CERTIFICATE_IDENTITY"
+security -v import "${certificate_path}" -k "${keychain_path}" -P "${certificate_passphrase}" -A
+security -v set-keychain-settings -lut 72000 "${keychain_path}"
+security -v list-keychains -s $(security -v list-keychains | tr -d '"') "${keychain_path}"
+security -v default-keychain -s "${keychain_path}"
+security -v unlock-keychain -p "${keychain_password}" "${keychain_path}"
+
+certificate_identity=$(security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | head -n 1)
+echo "Installed certificate: $certificate_identity"
 echo
 
 #
-# Install provisioning profile
+# Install provisioning profiles
+#  NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 IFS='|' read -a profile_urls <<< "${provisioning_profile_url}"
 
 profile_count="${#profile_urls[@]}"
@@ -101,6 +108,9 @@ do
 
   echo "Installing provisioning profile"
   profile_uuid=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "${tmp_path}"))
-  echo "Profile UUID: ${profile_uuid}"
+  echo "=> Profile UUID: ${profile_uuid}"
   mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.mobileprovision"
 done
+
+echo
+echo "==> DONE"

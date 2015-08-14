@@ -12,25 +12,35 @@ type_tags:
   - security
 is_requires_admin_user: false
 inputs:
-  - certificate_url:
+  - certificate_url: $BITRISE_CERTIFICATE_URL
     opts:
       title: "Certificate URL"
       description: |
         URL of the certificate to download
       is_required: true
       is_expand: true
-  - certificate_passphrase:
+  - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE
     opts:
       title: "Certificate passphrase"
       description: |
         Certificate passphrase
       is_required: true
-      is_expand: false
-  - provisioning_profile_url:
+      is_expand: true
+  - provisioning_profile_url: $BITRISE_PROVISION_URL
     opts:
       title: "Provisioning profile URL"
       description: |
         URL of the provisioning profile to download
+      is_required: true
+      is_expand: true
+  - keychain_path: $HOME/Library/Keychains/login.keychain
+    opts:
+      title: Keychain Path
+      is_required: true
+      is_expand: true
+  - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
+    opts:
+      title: Keychain's password
       is_required: true
       is_expand: true
 outputs: []
