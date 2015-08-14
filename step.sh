@@ -80,6 +80,8 @@ download_file "${certificate_path}" "${certificate_url}"
 if [ ! -f "${keychain_path}" ] ; then
   echo "=> Creating keychain: ${keychain_path}"
   security -v create-keychain -p "${keychain_password}" "${keychain_path}"
+else
+  echo "=> Keychain already exists, using it: ${keychain_path}"
 fi
 
 security -v import "${certificate_path}" -k "${keychain_path}" -P "${certificate_passphrase}" -A
