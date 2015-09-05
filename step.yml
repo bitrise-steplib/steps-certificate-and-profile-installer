@@ -1,9 +1,10 @@
-title: "Certificate and profile installer"
-summary: Downloads and installs the certificate and the mobile provisioning profiles
+title: Certificate and profile installer
+summary: Certificate and profile installer
+description: |-
+  Downloads and installs the certificate and the mobile provisioning profiles
 website: https://github.com/bitrise-io/steps-certificate-and-profile-installer
-fork_url: https://github.com/bitrise-io/steps-certificate-and-profile-installer
-source:
-  git: https://github.com/bitrise-io/steps-certificate-and-profile-installer
+source_code_url: https://github.com/bitrise-io/steps-certificate-and-profile-installer
+support_url: https://github.com/bitrise-io/steps-certificate-and-profile-installer/issues
 host_os_tags:
   - "osx-10.10"
 project_type_tags:
@@ -11,36 +12,52 @@ project_type_tags:
 type_tags:
   - security
 is_requires_admin_user: false
+is_always_run: false
+is_skippable: false
+dependencies: []
+run_if: ""
 inputs:
   - certificate_url: $BITRISE_CERTIFICATE_URL
     opts:
       title: "Certificate URL"
       description: |
         URL of the certificate to download
+      summary: ""
       is_required: true
       is_expand: true
+      is_dont_change_value: false
   - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE
     opts:
       title: "Certificate passphrase"
       description: |
         Certificate passphrase
+      summary: ""
       is_required: true
       is_expand: true
+      is_dont_change_value: false
   - provisioning_profile_url: $BITRISE_PROVISION_URL
     opts:
       title: "Provisioning profile URL"
       description: |
         URL of the provisioning profile to download
+      summary: ""
       is_required: true
       is_expand: true
+      is_dont_change_value: false
   - keychain_path: $HOME/Library/Keychains/login.keychain
     opts:
       title: Keychain Path
+      description: ""
+      summary: ""
       is_required: true
       is_expand: true
+      is_dont_change_value: false
   - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
     opts:
       title: Keychain's password
+      description: ""
+      summary: ""
       is_required: true
       is_expand: true
+      is_dont_change_value: false
 outputs: []
