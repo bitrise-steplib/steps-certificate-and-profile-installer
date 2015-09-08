@@ -1,17 +1,18 @@
-format_version: 0.9.10
+format_version: 1.0.0
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
   # define these in your .bitrise.secrets.yml
-  - certificate_url:
-  - certificate_passphrase:
-  - provisioning_profile_url:
-  - keychain_path:
-  - keychain_password:
+  - BITRISE_CERTIFICATE_URL:
+  - BITRISE_CERTIFICATE_PASSPHRASE:
+  - BITRISE_PROVISION_URL:
+  - BITRISE_KEYCHAIN_PASSWORD:
 
 workflows:
   test:
     steps:
     - path::./:
+        run_if: "true"
         inputs:
+        - keychain_path: $HOME/Library/Keychains/login.keychain
