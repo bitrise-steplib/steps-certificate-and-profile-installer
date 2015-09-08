@@ -8,6 +8,3 @@ and call `bitrise run test`.
 
 *Check the `bitrise.yml` file for required inputs which have to be
 added to your `.bitrise.secrets.yml` file!*
-
-**Public Beta:** this repository is still under active development,
-frequent changes are expected. **Feedback is greatly appreciated!**
