@@ -24,11 +24,6 @@ if [ -z "${keychain_password}" ] ; then
   exit 1
 fi
 
-if [ -z "${certificate_passphrase}" ] ; then
-  echo "Missing required input: certificate_passphrase"
-  exit 1
-fi
-
 if [ -z "${provisioning_profile_url}" ] ; then
   echo "Missing required input: provisioning_profile_url"
   exit 1
