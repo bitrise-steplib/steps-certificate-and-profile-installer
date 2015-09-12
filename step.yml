@@ -32,7 +32,7 @@ inputs:
       description: |
         Certificate passphrase
       summary: ""
-      is_required: true
+      is_required: false
       is_expand: true
       is_dont_change_value: false
   - provisioning_profile_url: $BITRISE_PROVISION_URL
