@@ -16,3 +16,8 @@ workflows:
         run_if: "true"
         inputs:
         - keychain_path: $HOME/Library/Keychains/login.keychain
+    - script:
+        inputs:
+        - content: |-
+            echo "BITRISE_PROVISIONING_PROFILE_ID: ${BITRISE_PROVISIONING_PROFILE_ID}"
+            echo "BITRISE_CODE_SIGN_IDENTITY: ${BITRISE_CODE_SIGN_IDENTITY}"

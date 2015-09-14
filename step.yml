@@ -60,4 +60,13 @@ inputs:
       is_required: true
       is_expand: true
       is_dont_change_value: false
-outputs: []
+outputs:
+- BITRISE_PROVISIONING_PROFILE_ID:
+  opts:
+    title: Activated Provisioning Profile ID
+    description: |-
+      **Will only export the Profile ID if you specify
+      a single Provisioning Profile!**
+- BITRISE_CODE_SIGN_IDENTITY:
+  opts:
+    title: Activated Code Signing Certificate ID

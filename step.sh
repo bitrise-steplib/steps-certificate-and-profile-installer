@@ -85,16 +85,17 @@ security -v list-keychains -s $(security -v list-keychains | tr -d '"') "${keych
 security -v default-keychain -s "${keychain_path}"
 security -v unlock-keychain -p "${keychain_password}" "${keychain_path}"
 
-certificate_identity=$(security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | head -n 1)
+certificate_identity=$(security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | grep -i '^iPhone' | head -n 1)
 echo "Installed certificate: $certificate_identity"
+printf "${certificate_identity}" | envman add --key 'BITRISE_CODE_SIGN_IDENTITY'
 echo
 
 #
 # Install provisioning profiles
 #  NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 IFS='|' read -a profile_urls <<< "${provisioning_profile_url}"
-
 profile_count="${#profile_urls[@]}"
+echo " (i) Provided Provisioning Profile count: ${profile_count}"
 for idx in "${!profile_urls[@]}"
 do
   profile_url="${profile_urls[idx]}"
@@ -105,9 +106,18 @@ do
 
   echo "Installing provisioning profile"
   profile_uuid=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "${tmp_path}"))
-  echo "=> Profile UUID: ${profile_uuid}"
+  echo "=> Installed Profile UUID: ${profile_uuid}"
   mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.mobileprovision"
+
+  if [[ "${profile_count}" == "1" ]] ; then
+    # export it
+    printf "${profile_uuid}" | envman add --key 'BITRISE_PROVISIONING_PROFILE_ID'
+  fi
 done
+
+if [[ "${profile_count}" != "1" ]] ; then
+  echo " (!) Won't export BITRISE_PROVISIONING_PROFILE_ID, only a single profile id can be exported and ${profile_count} specified!"
+fi
 
 echo
 echo "==> DONE"
