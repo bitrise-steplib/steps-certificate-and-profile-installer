@@ -49,6 +49,8 @@ function download_file {
   local path="$1"
   local url="$2"
 
+  set +e
+
   curl -Lfso "${path}" "${url}"
   local result=$?
 
@@ -56,12 +58,18 @@ function download_file {
     echo " (i) Failed to download, retrying..."
     sleep 5
     curl -Lfso "${path}" "${url}"
+    local result=$?
+    if [ ${result} -ne 0 ]; then
+      path=""
+    fi
   fi
 
   if [[ ! -f "${path}" ]]; then
-    echo "Failed to download file: #{url}"
+    echo "Failed to download from: ${url}"
     exit 1
   fi
+
+  set -e
 }
 
 echo "Downloading certificate"
