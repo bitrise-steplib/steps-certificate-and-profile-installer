@@ -87,11 +87,11 @@ else
   echo "=> Keychain already exists, using it: ${keychain_path}"
 fi
 
-security -v import "${certificate_path}" -k "${keychain_path}" -P "${certificate_passphrase}" -A
-security -v set-keychain-settings -lut 72000 "${keychain_path}"
-security -v list-keychains -s $(security -v list-keychains | tr -d '"') "${keychain_path}"
-security -v default-keychain -s "${keychain_path}"
-security -v unlock-keychain -p "${keychain_password}" "${keychain_path}"
+security import "${certificate_path}" -k "${keychain_path}" -P "${certificate_passphrase}" -A
+security set-keychain-settings -lut 72000 "${keychain_path}"
+security list-keychains -s $(security -v list-keychains | tr -d '"') "${keychain_path}"
+security default-keychain -s "${keychain_path}"
+security unlock-keychain -p "${keychain_password}" "${keychain_path}"
 
 certificate_identity=$(security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | grep -i '^iPhone' | head -n 1)
 echo "Installed certificate: $certificate_identity"
