@@ -104,23 +104,27 @@ echo "Installed certificate: $certificate_identity"
 printf "${certificate_identity}" | envman add --key 'BITRISE_CODE_SIGN_IDENTITY'
 echo
 
+
 #
 # Install provisioning profiles
 #  NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
+echo
+echo "=> Downloading & installing Provisioning Profile(s) ..."
+
 IFS='|' read -a profile_urls <<< "${provisioning_profile_url}"
 profile_count="${#profile_urls[@]}"
 echo " (i) Provided Provisioning Profile count: ${profile_count}"
 for idx in "${!profile_urls[@]}"
 do
   profile_url="${profile_urls[idx]}"
-  echo "Downloading provisioning profile: ${idx+1}/${profile_count}"
+  echo "==> Downloading provisioning profile: ${idx+1}/${profile_count}"
 
   tmp_path="${temp_dir}/profile-${idx}.mobileprovision"
   download_file "${tmp_path}" "${profile_url}"
 
-  echo "Installing provisioning profile"
+  echo "==> Installing provisioning profile"
   profile_uuid=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "${tmp_path}"))
-  echo "=> Installed Profile UUID: ${profile_uuid}"
+  echo "==> Installed Profile UUID: ${profile_uuid}"
   mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.mobileprovision"
 
   if [[ "${profile_count}" == "1" ]] ; then
@@ -134,4 +138,4 @@ if [[ "${profile_count}" != "1" ]] ; then
 fi
 
 echo
-echo "==> DONE"
+echo "=> DONE"
