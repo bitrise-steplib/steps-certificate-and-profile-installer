@@ -72,7 +72,8 @@ function download_file {
   set -e
 }
 
-echo "Downloading certificate"
+echo
+echo "=> Downloading certificate"
 certificate_path="${temp_dir}/Certificate.p12"
 download_file "${certificate_path}" "${certificate_url}"
 
@@ -80,14 +81,19 @@ download_file "${certificate_path}" "${certificate_url}"
 #
 # Install certificate
 
+echo
+echo "=> Installing downloaded certificate ..."
+
 if [ ! -f "${keychain_path}" ] ; then
-  echo "=> Creating keychain: ${keychain_path}"
+  echo "==> Creating keychain: ${keychain_path}"
   security -v create-keychain -p "${keychain_password}" "${keychain_path}"
 else
-  echo "=> Keychain already exists, using it: ${keychain_path}"
+  echo "==> Keychain already exists, using it: ${keychain_path}"
 fi
 
-security -v import "${certificate_path}" -k "${keychain_path}" -P "${certificate_passphrase}" -A
+echo
+
+security import "${certificate_path}" -k "${keychain_path}" -P "${certificate_passphrase}" -A
 security -v set-keychain-settings -lut 72000 "${keychain_path}"
 security -v list-keychains -s $(security -v list-keychains | tr -d '"') "${keychain_path}"
 security -v default-keychain -s "${keychain_path}"
