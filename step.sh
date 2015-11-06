@@ -82,13 +82,13 @@ download_file "${certificate_path}" "${certificate_url}"
 # Install certificate
 
 echo
-echo "=> Installing downloaded certificate ..."
+echo "==> Installing downloaded certificate ..."
 
 if [ ! -f "${keychain_path}" ] ; then
   echo "==> Creating keychain: ${keychain_path}"
   security -v create-keychain -p "${keychain_password}" "${keychain_path}"
 else
-  echo "==> Keychain already exists, using it: ${keychain_path}"
+  echo "===> Keychain already exists, using it: ${keychain_path}"
 fi
 
 echo
@@ -122,9 +122,9 @@ do
   tmp_path="${temp_dir}/profile-${idx}.mobileprovision"
   download_file "${tmp_path}" "${profile_url}"
 
-  echo "==> Installing provisioning profile"
+  echo "===> Installing provisioning profile"
   profile_uuid=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "${tmp_path}"))
-  echo "==> Installed Profile UUID: ${profile_uuid}"
+  echo "====> Installed Profile UUID: ${profile_uuid}"
   mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.mobileprovision"
 
   if [[ "${profile_count}" == "1" ]] ; then
