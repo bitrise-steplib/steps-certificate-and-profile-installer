@@ -5,7 +5,7 @@ set -e
 #
 # Init
 provisioning_profile_dir="${HOME}/Library/MobileDevice/Provisioning Profiles"
-temp_dir="${HOME}/tmp_dir"
+temp_dir=$(mktemp -d -t bitrise-cert-tmp)
 
 #
 # Required parameters
@@ -119,11 +119,11 @@ do
   profile_url="${profile_urls[idx]}"
   echo "==> Downloading provisioning profile: ${idx+1}/${profile_count}"
 
-  provisioning_profile_ext="mobileprovision"
+  provisioning_profile_ext="provisionprofile"
   mobile_provision=$(grep ".${provisioning_profile_ext}" <<< "${profile_url}")
 
   if [ -z "${mobile_provision}" ]; then
-    provisioning_profile_ext="provisionprofile"
+    provisioning_profile_ext="mobileprovision"
   fi
 
   tmp_path="${temp_dir}/profile-${idx}.${provisioning_profile_ext}"
@@ -132,7 +132,9 @@ do
   echo "===> Installing provisioning profile"
   profile_uuid=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "${tmp_path}"))
   echo "====> Installed Profile UUID: ${profile_uuid}"
-  mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.${provisioning_profile_ext}"
+  profile_final_pth="${provisioning_profile_dir}/${profile_uuid}.${provisioning_profile_ext}"
+  echo "====> Moving it to: ${profile_final_pth}"
+  mv "${tmp_path}" "${profile_final_pth}"
 
   if [[ "${profile_count}" == "1" ]] ; then
     # export it
