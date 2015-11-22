@@ -119,13 +119,20 @@ do
   profile_url="${profile_urls[idx]}"
   echo "==> Downloading provisioning profile: ${idx+1}/${profile_count}"
 
-  tmp_path="${temp_dir}/profile-${idx}.mobileprovision"
+  provisioning_profile_ext="mobileprovision"
+  mobile_provision=$(grep ".${provisioning_profile_ext}" <<< "${profile_url}")
+
+  if [ -z "${mobile_provision}" ]; then
+    provisioning_profile_ext="provisionprofile"
+  fi
+
+  tmp_path="${temp_dir}/profile-${idx}.${provisioning_profile_ext}"
   download_file "${tmp_path}" "${profile_url}"
 
   echo "===> Installing provisioning profile"
   profile_uuid=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i "${tmp_path}"))
   echo "====> Installed Profile UUID: ${profile_uuid}"
-  mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.mobileprovision"
+  mv "${tmp_path}" "${provisioning_profile_dir}/${profile_uuid}.${provisioning_profile_ext}"
 
   if [[ "${profile_count}" == "1" ]] ; then
     # export it
