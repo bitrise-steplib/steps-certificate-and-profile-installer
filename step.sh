@@ -119,12 +119,14 @@ do
   profile_url="${profile_urls[idx]}"
   echo "==> Downloading provisioning profile: ${idx+1}/${profile_count}"
 
+  set +e
   provisioning_profile_ext="provisionprofile"
   mobile_provision=$(grep ".${provisioning_profile_ext}" <<< "${profile_url}")
 
   if [ -z "${mobile_provision}" ]; then
     provisioning_profile_ext="mobileprovision"
   fi
+  set -e
 
   tmp_path="${temp_dir}/profile-${idx}.${provisioning_profile_ext}"
   download_file "${tmp_path}" "${profile_url}"
