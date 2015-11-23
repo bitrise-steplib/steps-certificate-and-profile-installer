@@ -126,7 +126,7 @@ do
 
   set +e
   provisioning_profile_ext="provisionprofile"
-  mobile_provision=$(grep ".${provisioning_profile_ext}" <<< "${profile_url}")
+  mobile_provision=$(grep "\.${provisioning_profile_ext}" <<< "${profile_url}")
 
   if [ -z "${mobile_provision}" ]; then
     provisioning_profile_ext="mobileprovision"
