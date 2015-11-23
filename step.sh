@@ -99,9 +99,12 @@ security -v list-keychains -s $(security -v list-keychains | tr -d '"') "${keych
 security -v default-keychain -s "${keychain_path}"
 security -v unlock-keychain -p "${keychain_password}" "${keychain_path}"
 
-certificate_identity=$(security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | grep -i '^iPhone' | head -n 1)
+certificate_identity=$(security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | grep -i -e '^iPhone' -e '^Mac' | head -n 1)
 echo "Installed certificate: $certificate_identity"
 printf "${certificate_identity}" | envman add --key 'BITRISE_CODE_SIGN_IDENTITY'
+echo
+echo "==> Available iOS & Mac certificates:"
+security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | grep -i -e '^iPhone' -e '^Mac'
 echo
 
 
