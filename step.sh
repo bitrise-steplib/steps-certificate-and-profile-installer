@@ -104,8 +104,9 @@ echo "Installed certificate: $certificate_identity"
 printf "${certificate_identity}" | envman add --key 'BITRISE_CODE_SIGN_IDENTITY'
 echo
 echo "=> Available iOS & Mac certificates:"
+echo "---"
 security find-certificate -a ${keychain_path} | grep -Ei '"labl"<blob>=".*"' | grep -oEi '=".*"' | grep -oEi '[^="]+' | grep -i -e '^iPhone' -e '^Mac'
-echo " ---"
+echo "---"
 echo
 
 
