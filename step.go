@@ -67,11 +67,21 @@ func validateRequiredInput(key string) (string, error) {
 func printConfig(certificateURL, certificatePassphrase, provisioningProfileURL, keychainPath, keychainPassword string) {
 	fmt.Println()
 	fmt.Println("========== Configs ==========")
-	Printlnf(" * certificate_url: %s", certificateURL)
-	Printlnf(" * certificate_passphrase: ***")
-	Printlnf(" * provisioning_profile_url: %s", provisioningProfileURL)
-	Printlnf(" * keychain_path: %s", keychainPath)
-	Printlnf(" * keychain_password: ***")
+	if certificateURL != "" {
+		Printlnf(" * certificate_url: ***")
+	}
+	if certificatePassphrase != "" {
+		Printlnf(" * certificate_passphrase: ***")
+	}
+	if provisioningProfileURL != "" {
+		Printlnf(" * provisioning_profile_url: ***")
+	}
+	if keychainPath != "" {
+		Printlnf(" * keychain_path: %s", keychainPath)
+	}
+	if keychainPassword != "" {
+		Printlnf(" * keychain_password: ***")
+	}
 	fmt.Println("=============================")
 	fmt.Println()
 }
@@ -88,7 +98,7 @@ func downloadFile(destionationPath, URL string) error {
 
 	tmpDstFilePath := ""
 	if scheme != "file" {
-		Printlnf("==> Downloading (%s) to (%s)", URL, destionationPath)
+		Printlnf("==> Downloading (***) to (%s)", destionationPath)
 
 		tmpDir, err := normalizedOSTempDirPath("download")
 		if err != nil {
@@ -118,7 +128,7 @@ func downloadFile(destionationPath, URL string) error {
 
 		tmpDstFilePath = tmpDstFile.Name()
 	} else {
-		Printlnf("==> Moving (%s) to (%s)", URL, destionationPath)
+		Printlnf("==> Moving (***) to (%s)", destionationPath)
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
