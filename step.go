@@ -311,7 +311,7 @@ func main() {
 
 	//
 	// Install certificate
-	Printlnf("==> Exporting downloaded certificate ...")
+	Printlnf("==> Installing downloaded certificate ...")
 
 	if exist, err := isPathExists(keychainPath); err != nil {
 		printFatallnf(1, "Failed to check path (%s), err: %s", keychainPath, err)
