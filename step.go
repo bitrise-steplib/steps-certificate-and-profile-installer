@@ -14,9 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/bitrise-io/go-utils/cmdex"
-	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 // PrintFatallnf ...
@@ -94,7 +91,7 @@ func downloadFile(destionationPath, URL string) error {
 	if scheme != "file" {
 		Printlnf("==> Downloading (%s) to (%s)", URL, destionationPath)
 
-		tmpDir, err := pathutil.NormalizedOSTempDirPath("download")
+		tmpDir, err := normalizedOSTempDirPath("download")
 		if err != nil {
 			return err
 		}
@@ -124,7 +121,8 @@ func downloadFile(destionationPath, URL string) error {
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
-	if err := cmdex.CopyFile(tmpDstFilePath, destionationPath); err != nil {
+	if out, err := runCommandAndReturnCombinedStdoutAndStderr("mv", tmpDstFilePath, destionationPath); err != nil {
+		Printlnf("Move out: %s", out)
 		return err
 	}
 
