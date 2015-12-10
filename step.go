@@ -13,6 +13,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // PrintErrorlnf ...
@@ -104,15 +105,28 @@ func downloadFile(destionationPath, URL string) error {
 		}
 		defer tmpDstFile.Close()
 
-		response, err := http.Get(URL)
-		if err != nil {
-			PrintErrorlnf(" (i) Failed to download, retrying...")
+		success := false
+		var response *http.Response
+		for i := 0; i < 3 && !success; i++ {
+			if i > 0 {
+				fmt.Println("-> Retrying...")
+				time.Sleep(3 * time.Second)
+			}
+
 			response, err = http.Get(URL)
 			if err != nil {
-				return err
+				PrintErrorlnf("%s", err)
+			} else {
+				success = true
+			}
+
+			if response != nil {
+				defer response.Body.Close()
 			}
 		}
-		defer response.Body.Close()
+		if !success {
+			return err
+		}
 
 		_, err = io.Copy(tmpDstFile, response.Body)
 		if err != nil {
