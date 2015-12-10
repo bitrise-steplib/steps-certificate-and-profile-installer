@@ -247,9 +247,6 @@ func certificateFriendlyName(certificatePath, certificatePassphrase string) (str
 	if err != nil {
 		return out, err
 	}
-	Printlnf("")
-	Printlnf("Cert: %s", out)
-	Printlnf("")
 	name := searchFriendlyName(out)
 	return name, nil
 }
