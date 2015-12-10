@@ -104,7 +104,11 @@ func downloadFile(destionationPath, URL string) error {
 
 		response, err := http.Get(URL)
 		if err != nil {
-			return err
+			PrintErrorlnf(" (i) Failed to download, retrying...")
+			response, err = http.Get(URL)
+			if err != nil {
+				return err
+			}
 		}
 		defer response.Body.Close()
 
@@ -121,7 +125,7 @@ func downloadFile(destionationPath, URL string) error {
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
-	if out, err := runCommandAndReturnCombinedStdoutAndStderr("mv", tmpDstFilePath, destionationPath); err != nil {
+	if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpDstFilePath, destionationPath); err != nil {
 		Printlnf("Move out: %s", out)
 		return err
 	}
@@ -457,7 +461,7 @@ func main() {
 
 		Printlnf("==> Moving it to: %s", profileFinalPth)
 
-		if out, err := runCommandAndReturnCombinedStdoutAndStderr("mv", tmpPath, profileFinalPth); err != nil {
+		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpPath, profileFinalPth); err != nil {
 			PrintErrorlnf("Command failed, output: %s", out)
 			PrintFatallnf(1, "Command failed, err: %s", err)
 		}
