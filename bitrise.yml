@@ -4,10 +4,10 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   # define these in your .bitrise.secrets.yml
-  - BITRISE_CERTIFICATE_URL:
-  - BITRISE_CERTIFICATE_PASSPHRASE:
-  - BITRISE_PROVISION_URL:
-  - BITRISE_KEYCHAIN_PASSWORD:
+  - BITRISE_CERTIFICATE_URL: $BITRISE_CERTIFICATE_URL
+  - BITRISE_CERTIFICATE_PASSPHRASE: $BITRISE_CERTIFICATE_PASSPHRASE
+  - BITRISE_PROVISION_URL: $BITRISE_PROVISION_URL
+  - BITRISE_KEYCHAIN_PASSWORD: $BITRISE_KEYCHAIN_PASSWORD
 
 workflows:
   test:
@@ -26,7 +26,11 @@ workflows:
     - path::./:
         run_if: true
         inputs:
+        - certificate_url: $BITRISE_CERTIFICATE_URL
+        - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE
+        - provisioning_profile_url: $BITRISE_PROVISION_URL
         - keychain_path: $HOME/Library/Keychains/login.keychain
+        - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
     - script:
         inputs:
         - content: |-
