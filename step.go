@@ -15,13 +15,6 @@ import (
 	"strings"
 )
 
-// PrintFatallnf ...
-func PrintFatallnf(exitCode int, format string, a ...interface{}) {
-	errorMsg := fmt.Sprintf(format, a...)
-	Printlnf("\x1b[31;1m%s\x1b[0m", errorMsg)
-	os.Exit(exitCode)
-}
-
 // PrintErrorlnf ...
 func PrintErrorlnf(format string, a ...interface{}) {
 	errorMsg := fmt.Sprintf(format, a...)
@@ -255,21 +248,27 @@ func availableCertificates(keychainPath string) ([]string, error) {
 }
 
 func main() {
+	printFatallnf := func(exitCode int, format string, a ...interface{}) {
+		errorMsg := fmt.Sprintf(format, a...)
+		Printlnf("\x1b[31;1m%s\x1b[0m", errorMsg)
+		os.Exit(exitCode)
+	}
+
 	//
 	// Init
 	homeDir := os.Getenv("HOME")
 	provisioningProfileDir := path.Join(homeDir, "Library/MobileDevice/Provisioning Profiles")
 	if exist, err := isPathExists(provisioningProfileDir); err != nil {
-		PrintFatallnf(1, "Failed to check path (%s), err: %s", provisioningProfileDir, err)
+		printFatallnf(1, "Failed to check path (%s), err: %s", provisioningProfileDir, err)
 	} else if !exist {
 		if err := os.MkdirAll(provisioningProfileDir, 0777); err != nil {
-			PrintFatallnf(1, "Failed to create path (%s), err: %s", provisioningProfileDir, err)
+			printFatallnf(1, "Failed to create path (%s), err: %s", provisioningProfileDir, err)
 		}
 	}
 
 	tempDir, err := normalizedOSTempDirPath("bitrise-cert-tmp")
 	if err != nil {
-		PrintFatallnf(1, "Failed to create tmp directory, err: %s", err)
+		printFatallnf(1, "Failed to create tmp directory, err: %s", err)
 	}
 
 	//
@@ -307,7 +306,7 @@ func main() {
 
 	certificatePath := path.Join(tempDir, "Certificate.p12")
 	if err := downloadFile(certificatePath, certificateURL); err != nil {
-		PrintFatallnf(1, "Download failed, err: %s", err)
+		printFatallnf(1, "Download failed, err: %s", err)
 	}
 
 	//
@@ -315,13 +314,13 @@ func main() {
 	Printlnf("==> Exporting downloaded certificate ...")
 
 	if exist, err := isPathExists(keychainPath); err != nil {
-		PrintFatallnf(1, "Failed to check path (%s), err: %s", keychainPath, err)
+		printFatallnf(1, "Failed to check path (%s), err: %s", keychainPath, err)
 	} else if !exist {
 		Printlnf("==> Creating keychain: %s", keychainPath)
 
 		if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", keychainPassword, keychainPath); err != nil {
 			PrintErrorlnf("Failed to create keychain, output: %s", out)
-			PrintFatallnf(1, "Failed to create keychain, err: %s", err)
+			printFatallnf(1, "Failed to create keychain, err: %s", err)
 		}
 	} else {
 		Printlnf("==> Keychain already exists, using it: %s", keychainPath)
@@ -330,19 +329,19 @@ func main() {
 	importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", certificatePath, "-k", keychainPath, "-P", certificatePassphrase, "-A")
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", importOut)
-		PrintFatallnf(1, "Command failed, err: %s", err)
+		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
 	settingsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "set-keychain-settings", "-lut", "72000", keychainPath)
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", settingsOut)
-		PrintFatallnf(1, "Command failed, err: %s", err)
+		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
 	listKeychainsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "list-keychains")
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
-		PrintFatallnf(1, "Command failed, err: %s", err)
+		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
 	keychainList := strings.Split(listKeychainsOut, "\n")
@@ -360,36 +359,36 @@ func main() {
 	listKeychainsOut, err = runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "list-keychains", "-s", keychainListStr, keychainPath)
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
-		PrintFatallnf(1, "Command failed, err: %s", err)
+		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
 	defaultKeychainOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "default-keychain", "-s", keychainPath)
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", defaultKeychainOut)
-		PrintFatallnf(1, "Command failed, err: %s", err)
+		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
 	unlockOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "unlock-keychain", "-p", keychainPassword, keychainPath)
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", unlockOut)
-		PrintFatallnf(1, "Command failed, err: %s", err)
+		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
 	certificateIdentity, err := certificateFriendlyName(certificatePath, certificatePassphrase)
 	if err != nil {
 		PrintErrorlnf("Failed to get cert identity, output: %s", certificateIdentity)
-		PrintFatallnf(1, "Failed to get cert identity, err: %s", err)
+		printFatallnf(1, "Failed to get cert identity, err: %s", err)
 	}
 	if certificateIdentity == "" {
-		PrintFatallnf(1, "Failed to get cert identity")
+		printFatallnf(1, "Failed to get cert identity")
 	}
 
 	certs, err := availableCertificates(keychainPath)
 	if err != nil {
-		PrintFatallnf(1, "Failed to get certificate list, err:%s", err)
+		printFatallnf(1, "Failed to get certificate list, err:%s", err)
 	}
 	if len(certs) == 0 {
-		PrintFatallnf(1, "Failed to import certificate, no certificates found")
+		printFatallnf(1, "Failed to import certificate, no certificates found")
 	}
 
 	fmt.Println()
@@ -427,14 +426,14 @@ func main() {
 
 		tmpPath := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
 		if err := downloadFile(tmpPath, profileURL); err != nil {
-			PrintFatallnf(1, "Download failed, err: %s", err)
+			printFatallnf(1, "Download failed, err: %s", err)
 		}
 
 		fmt.Println("==> Installing provisioning profile")
 		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", tmpPath)
 		if err != nil {
 			PrintErrorlnf("Command failed, output: %s", out)
-			PrintFatallnf(1, "Command failed, err: %s", err)
+			printFatallnf(1, "Command failed, err: %s", err)
 		}
 
 		tmpProvProfilePth := path.Join(tempDir, "prov")
@@ -443,7 +442,7 @@ func main() {
 		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)
 		if err != nil {
 			PrintErrorlnf("Command failed, output: %s", profileUUID)
-			PrintFatallnf(1, "Command failed, err: %s", err)
+			printFatallnf(1, "Command failed, err: %s", err)
 		}
 
 		Printlnf("==> Installed Profile UUID: %s", profileUUID)
@@ -453,7 +452,7 @@ func main() {
 
 		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpPath, profileFinalPth); err != nil {
 			PrintErrorlnf("Command failed, output: %s", out)
-			PrintFatallnf(1, "Command failed, err: %s", err)
+			printFatallnf(1, "Command failed, err: %s", err)
 		}
 
 		if len(provisioningProfileURLs) == 1 {
