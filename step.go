@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -112,12 +111,10 @@ func downloadFile(destionationPath, URL string) error {
 		}
 		defer response.Body.Close()
 
-		n, err := io.Copy(tmpDstFile, response.Body)
+		_, err = io.Copy(tmpDstFile, response.Body)
 		if err != nil {
 			return err
 		}
-
-		Printlnf(" (i) %d bytes downloaded", n)
 
 		tmpDstFilePath = tmpDstFile.Name()
 	} else {
@@ -133,32 +130,15 @@ func downloadFile(destionationPath, URL string) error {
 	return nil
 }
 
-func printableCommandArgs(fullCommandArgs []string) string {
-	cmdArgsDecorated := []string{}
-	for idx, anArg := range fullCommandArgs {
-		quotedArg := strconv.Quote(anArg)
-		if idx == 0 {
-			quotedArg = anArg
-		}
-		cmdArgsDecorated = append(cmdArgsDecorated, quotedArg)
-	}
-
-	return strings.Join(cmdArgsDecorated, " ")
-}
-
 func runCommandAndReturnCombinedStdoutAndStderr(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
-
-	printableCmdArgs := printableCommandArgs(cmd.Args)
-	Printlnf(" (i) Full command: $ %s", printableCmdArgs)
-
 	outBytes, err := cmd.CombinedOutput()
 	outStr := string(outBytes)
 	return strings.TrimSpace(outStr), err
 }
 
 func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
-	Printlnf("==> Exporting: %s", keyStr)
+	Printlnf("==> Exporting: %s=%s", keyStr, valueStr)
 	envman := exec.Command("envman", "add", "--key", keyStr)
 	envman.Stdin = strings.NewReader(valueStr)
 	envman.Stdout = os.Stdout
