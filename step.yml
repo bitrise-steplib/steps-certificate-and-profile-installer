@@ -50,7 +50,7 @@ inputs:
         specified, separated by a pipe (`|`) character.
 
         You can specify a local path as well, using the `file://` scheme.
-        Example: `file://./Cert.p12`
+        Example: `file://./BuildAnything.mobileprovision`
       summary: ""
       is_required: true
       is_expand: true
