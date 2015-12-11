@@ -352,7 +352,7 @@ func main() {
 		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
-	listKeychainsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "list-keychains")
+	listKeychainsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "list-keychains")
 	if err != nil {
 		PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
 		printFatallnf(1, "Command failed, err: %s", err)
