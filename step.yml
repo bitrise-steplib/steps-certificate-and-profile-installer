@@ -25,7 +25,10 @@ inputs:
     opts:
       title: "Certificate URL"
       description: |
-        URL of the certificate to download
+        URL of the certificate to download.
+
+        You can specify a local path as well, using the `file://` scheme.
+        Example: `file://./Cert.p12`
       summary: ""
       is_required: true
       is_expand: true
@@ -43,7 +46,11 @@ inputs:
     opts:
       title: "Provisioning profile URL"
       description: |
-        URL of the provisioning profile to download
+        URL of the provisioning profile to download. Multiple URLs can be
+        specified, separated by a pipe (`|`) character.
+
+        You can specify a local path as well, using the `file://` scheme.
+        Example: `file://./Cert.p12`
       summary: ""
       is_required: true
       is_expand: true
