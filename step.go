@@ -424,9 +424,6 @@ func main() {
 	Printlnf("=> Downloading & installing Provisioning Profile(s) ...")
 
 	provisioningProfileURLs := strings.Split(provisioningProfileURL, "|")
-	if len(provisioningProfileURLs) == 0 {
-		provisioningProfileURLs = []string{provisioningProfileURL}
-	}
 
 	Printlnf(" (i) Provided Provisioning Profile count: %d", len(provisioningProfileURLs))
 
