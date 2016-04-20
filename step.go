@@ -223,7 +223,7 @@ func searchIphoneAndMacCreatificates(lines []string) []string {
 
 	filteredCerts := []string{}
 	for _, cert := range certs {
-		if strings.HasPrefix(cert, "iPhone") || strings.HasPrefix(cert, "Mac") {
+		if strings.HasPrefix(cert, "iPhone") || strings.HasPrefix(cert, "Mac") || strings.HasPrefix(cert, "3rd Party Mac") {
 			filteredCerts = append(filteredCerts, cert)
 		}
 	}
