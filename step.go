@@ -468,14 +468,13 @@ func main() {
 
 		if len(provisioningProfileURLs) == 1 {
 			exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_ID", profileUUID)
+			exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_PATH", profileFinalPth)
 		}
 	}
-
 	if len(provisioningProfileURLs) != 1 {
 		fmt.Println()
-		fmt.Println(" (!) Won't export BITRISE_PROVISIONING_PROFILE_ID, only a single profile id can be exported and ${profile_count} specified!")
+		fmt.Println(" (!) Won't export BITRISE_PROVISIONING_PROFILE_ID and BITRISE_PROVISIONING_PROFILE_PATH, only a single profile id can be exported and ${profile_count} specified!")
 	}
-
 	fmt.Println()
 	fmt.Println("=> Done")
 }

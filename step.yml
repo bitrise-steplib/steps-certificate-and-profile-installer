@@ -78,6 +78,12 @@ outputs:
     description: |-
       **Will only export the Profile ID if you specify
       a single Provisioning Profile!**
+- BITRISE_PROVISIONING_PROFILE_PATH:
+  opts:
+    title: Activated Provisioning Profile Path
+    description: |-
+      **Will only export the Profile Path if you specify
+      a single Provisioning Profile!**
 - BITRISE_CODE_SIGN_IDENTITY:
   opts:
     title: Activated Code Signing Certificate ID
