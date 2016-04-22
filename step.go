@@ -425,10 +425,11 @@ func main() {
 
 	provisioningProfileURLs := strings.Split(provisioningProfileURL, "|")
 
-	Printlnf(" (i) Provided Provisioning Profile count: %d", len(provisioningProfileURLs))
+	profileCount := len(provisioningProfileURLs)
+	Printlnf(" (i) Provided Provisioning Profile count: %d", profileCount)
 
 	for idx, profileURL := range provisioningProfileURLs {
-		Printlnf("==> Downloading provisioning profile: %d/%d", idx+1, len(provisioningProfileURLs))
+		Printlnf("==> Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
 		provisioningProfileExt := "provisionprofile"
 		if !strings.Contains(profileURL, "."+provisioningProfileExt) {
@@ -466,14 +467,14 @@ func main() {
 			printFatallnf(1, "Command failed, err: %s", err)
 		}
 
-		if len(provisioningProfileURLs) == 1 {
+		if profileCount == 1 {
 			exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_ID", profileUUID)
 			exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_PATH", profileFinalPth)
 		}
 	}
-	if len(provisioningProfileURLs) != 1 {
+	if profileCount != 1 {
 		fmt.Println()
-		fmt.Println(" (!) Won't export BITRISE_PROVISIONING_PROFILE_ID and BITRISE_PROVISIONING_PROFILE_PATH, only a single profile id can be exported and ${profile_count} specified!")
+		fmt.Printf(" (!) Won't export BITRISE_PROVISIONING_PROFILE_ID and BITRISE_PROVISIONING_PROFILE_PATH, only a single profile id can be exported and %d specified!", profileCount)
 	}
 	fmt.Println()
 	fmt.Println("=> Done")
