@@ -90,3 +90,141 @@ func TestSearchFriendlyName(t *testing.T) {
 		}
 	}
 }
+
+func TestStip(t *testing.T) {
+	t.Log(`Nothing to strip`)
+	{
+		line := `/Library/Keychains/System.keychain`
+
+		got := strip(line)
+		expected := `/Library/Keychains/System.keychain`
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log(`Strip removes: (")`)
+	{
+		line := `"/Library/Keychains/System.keychain"`
+
+		got := strip(line)
+		expected := `/Library/Keychains/System.keychain`
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log(`Strip removes: (\t)`)
+	{
+		line := `    /Library/Keychains/System.keychain       `
+
+		got := strip(line)
+		expected := `/Library/Keychains/System.keychain`
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log(`Strip removes: (\n)`)
+	{
+		line := `
+
+    /Library/Keychains/System.keychain
+
+    `
+
+		got := strip(line)
+		expected := `/Library/Keychains/System.keychain`
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log(`Strip`)
+	{
+		line := `
+
+                      "/Library/Keychains/System.keychain"
+
+    `
+
+		got := strip(line)
+		expected := `/Library/Keychains/System.keychain`
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+}
+
+/*
+func addKeyChainToList(keyChainList []string, keyChain string) []string {
+	keyChainMap := map[string]bool{}
+
+	for _, aKeyChain := range keyChainList {
+		keyChainMap[aKeyChain] = true
+	}
+	keyChainMap[keyChain] = true
+
+	keyChains := []string{}
+	for aKeyChain := range keyChainMap {
+		keyChains = append(keyChains, aKeyChain)
+	}
+
+	return keyChains
+}
+*/
+
+func arrayEquals(a1, a2 []string) bool {
+	if len(a1) != len(a2) {
+		Printlnf("a1: %d - a2: %d", len(a1), len(a2))
+		return false
+	}
+
+	for i, e1 := range a1 {
+		e2 := a2[i]
+		if e1 != e2 {
+			Printlnf("e1: %d - e2: %d", e1, e2)
+			return false
+		}
+	}
+
+	return true
+}
+
+func TestAddKeyChainToList(t *testing.T) {
+	t.Log()
+	{
+		list := []string{"a", "b", "c"}
+		item := "d"
+
+		expected := []string{"a", "b", "c", "d"}
+		got := addKeyChainToList(list, item)
+		if !arrayEquals(got, expected) {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log()
+	{
+		list := []string{"a", "b", "c"}
+		item := "a"
+
+		expected := []string{"a", "b", "c"}
+		got := addKeyChainToList(list, item)
+		if !arrayEquals(got, expected) {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log()
+	{
+		list := []string{"a", "a", "b"}
+		item := "a"
+
+		expected := []string{"a", "b"}
+		got := addKeyChainToList(list, item)
+		if !arrayEquals(got, expected) {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+}
