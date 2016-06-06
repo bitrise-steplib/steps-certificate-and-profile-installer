@@ -74,30 +74,45 @@ func printConfig(
 	fmt.Println()
 	fmt.Println("Configs:")
 	fmt.Println("--------")
-	if certificateURL != "" {
-		Printlnf(" * certificate_url: ***")
-	}
-	if certificatePassphrase != "" {
-		Printlnf(" * certificate_passphrase: ***")
-	}
-	if defaultCertificateURL != "" {
-		Printlnf(" * default_certificate_url: ***")
-	}
-	if defaultCertificatePassphrase != "" {
-		Printlnf(" * default_certificate_passphrase: ***")
-	}
-	if defaultProvisioningProfileURL != "" {
-		Printlnf(" * default_provisioning_profile_url: ****")
-	}
-	if provisioningProfileURL != "" {
-		Printlnf(" * provisioning_profile_url: ***")
-	}
 	if keychainPath != "" {
 		Printlnf(" * keychain_path: %s", keychainPath)
 	}
+
 	if keychainPassword != "" {
-		Printlnf(" * keychain_password: ***")
+		keychainPassword = "***"
 	}
+	Printlnf(" * keychain_password: %s", keychainPassword)
+
+	if certificateURL != "" {
+		certificateURL = "***"
+	}
+	Printlnf(" * certificate_url: %s", certificateURL)
+
+	if certificatePassphrase != "" {
+		certificatePassphrase = "***"
+	}
+	Printlnf(" * certificate_passphrase: %s", certificatePassphrase)
+
+	if provisioningProfileURL != "" {
+		provisioningProfileURL = "***"
+	}
+	Printlnf(" * provisioning_profile_url: %s", provisioningProfileURL)
+
+	if defaultCertificateURL != "" {
+		defaultCertificateURL = "***"
+	}
+	Printlnf(" * default_certificate_url: %s", defaultCertificateURL)
+
+	if defaultCertificatePassphrase != "" {
+		defaultCertificatePassphrase = "***"
+	}
+	Printlnf(" * default_certificate_passphrase: %s", defaultCertificatePassphrase)
+
+	if defaultProvisioningProfileURL != "" {
+		defaultProvisioningProfileURL = "***"
+	}
+	Printlnf(" * default_provisioning_profile_url: %s", defaultProvisioningProfileURL)
+
 	fmt.Println()
 }
 
@@ -352,11 +367,6 @@ func main() {
 
 	//
 	// Required parameters
-	certificateURL, err := validateRequiredInput("certificate_url")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-
 	keychainPath, err := validateRequiredInput("keychain_path")
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
@@ -367,15 +377,13 @@ func main() {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
 
-	provisioningProfileURL, err := validateRequiredInput("provisioning_profile_url")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-
 	//
 	// Optional parameters
+	certificateURL, err := validateRequiredInput("certificate_url")
 	certificatePassphrase := os.Getenv("certificate_passphrase")
-	defaultdefaultCertificateURL := os.Getenv("default_certificate_url")
+	provisioningProfileURL, err := validateRequiredInput("provisioning_profile_url")
+
+	defaultCertificateURL := os.Getenv("default_certificate_url")
 	defaultCertificatePassphrase := os.Getenv("default_certificate_passphrase")
 	defaultProvisioningProfileURL := os.Getenv("default_provisioning_profile_url")
 
@@ -385,7 +393,7 @@ func main() {
 		provisioningProfileURL,
 		keychainPath,
 		keychainPassword,
-		defaultdefaultCertificateURL,
+		defaultCertificateURL,
 		defaultCertificatePassphrase,
 		defaultProvisioningProfileURL)
 
@@ -424,22 +432,24 @@ func main() {
 	fmt.Println()
 	Printlnf("Downloading & installing Certificate(s)")
 
-	certificateURLPassphraseMap := map[string]string{
-		certificateURL: certificatePassphrase,
+	certificateURLPassphraseMap := map[string]string{}
+
+	if certificateURL != "" {
+		certificateURLPassphraseMap[certificateURL] = certificatePassphrase
 	}
 
-	if defaultdefaultCertificateURL != "" {
+	if defaultCertificateURL != "" {
 		fmt.Println("Default Certificate given")
-		certificateURLPassphraseMap[defaultdefaultCertificateURL] = defaultCertificatePassphrase
+		certificateURLPassphraseMap[defaultCertificateURL] = defaultCertificatePassphrase
 	}
 
 	certificateCount := len(certificateURLPassphraseMap)
 	Printlnf("Provided Certificate count: %d", certificateCount)
-	fmt.Println()
 
 	certificatePassphraseMap := map[string]string{}
 	idx := 0
 	for certURL, pass := range certificateURLPassphraseMap {
+		fmt.Println()
 		Printlnf("=> Downloading certificate: %d/%d", idx+1, certificateCount)
 
 		certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
@@ -454,91 +464,95 @@ func main() {
 	//
 	// Install certificate
 	fmt.Println()
-	Printlnf("=> Installing downloaded certificate")
+	if len(certificatePassphraseMap) > 0 {
+		Printlnf("=> Installing downloaded certificate")
 
-	for cert, pass := range certificatePassphraseMap {
-		// Import items into a keychain.
-		importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", cert, "-k", keychainPath, "-P", pass, "-A")
+		for cert, pass := range certificatePassphraseMap {
+			// Import items into a keychain.
+			importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", cert, "-k", keychainPath, "-P", pass, "-A")
+			if err != nil {
+				PrintErrorlnf("Command failed, output: %s", importOut)
+				printFatallnf(1, "Command failed, err: %s", err)
+			}
+		}
+
+		// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
+		settingsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "set-keychain-settings", "-lut", "72000", keychainPath)
 		if err != nil {
-			PrintErrorlnf("Command failed, output: %s", importOut)
+			PrintErrorlnf("Command failed, output: %s", settingsOut)
 			printFatallnf(1, "Command failed, err: %s", err)
 		}
-	}
 
-	// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
-	settingsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "set-keychain-settings", "-lut", "72000", keychainPath)
-	if err != nil {
-		PrintErrorlnf("Command failed, output: %s", settingsOut)
-		printFatallnf(1, "Command failed, err: %s", err)
-	}
-
-	// List keychains
-	listKeychainsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "list-keychains")
-	if err != nil {
-		PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
-		printFatallnf(1, "Command failed, err: %s", err)
-	}
-
-	keychainList := strings.Split(listKeychainsOut, "\n")
-	strippedKeychainList := []string{}
-
-	for _, keychain := range keychainList {
-		strippedKeychain := strip(keychain)
-		strippedKeychainList = append(strippedKeychainList, strippedKeychain)
-	}
-
-	strippedKeychainList = addKeyChainToList(strippedKeychainList, keychainPath)
-
-	// Set keychain search path
-	args := []string{"-v", "list-keychains", "-s"}
-	args = append(args, strippedKeychainList...)
-
-	listKeychainsOut, err = runCommandAndReturnCombinedStdoutAndStderr("security", args...)
-	if err != nil {
-		PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
-		printFatallnf(1, "Command failed, err: %s", err)
-	}
-
-	// Set the default keychain
-	defaultKeychainOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "default-keychain", "-s", keychainPath)
-	if err != nil {
-		PrintErrorlnf("Command failed, output: %s", defaultKeychainOut)
-		printFatallnf(1, "Command failed, err: %s", err)
-	}
-
-	// Unlock the specified keychain
-	unlockOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "unlock-keychain", "-p", keychainPassword, keychainPath)
-	if err != nil {
-		PrintErrorlnf("Command failed, output: %s", unlockOut)
-		printFatallnf(1, "Command failed, err: %s", err)
-	}
-
-	for cert, pass := range certificatePassphraseMap {
-		certificateIdentity, err := certificateFriendlyName(cert, pass)
+		// List keychains
+		listKeychainsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "list-keychains")
 		if err != nil {
-			PrintErrorlnf("Failed to get cert identity, output: %s", certificateIdentity)
-			printFatallnf(1, "Failed to get cert identity, err: %s", err)
-		}
-		if certificateIdentity == "" {
-			printFatallnf(1, "Failed to get cert identity")
+			PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
+			printFatallnf(1, "Command failed, err: %s", err)
 		}
 
-		Printlnf("   Installed certificate: %s", certificateIdentity)
-	}
+		keychainList := strings.Split(listKeychainsOut, "\n")
+		strippedKeychainList := []string{}
 
-	certs, err := availableCertificates(keychainPath)
-	if err != nil {
-		printFatallnf(1, "Failed to get certificate list, err:%s", err)
-	}
-	if len(certs) == 0 {
-		printFatallnf(1, "Failed to import certificate, no certificates found")
-	}
+		for _, keychain := range keychainList {
+			strippedKeychain := strip(keychain)
+			strippedKeychainList = append(strippedKeychainList, strippedKeychain)
+		}
 
-	fmt.Println()
-	Printlnf("Available certificates:")
-	fmt.Println("-----------------------")
-	for _, cert := range certs {
-		Printlnf(" * %s", cert)
+		strippedKeychainList = addKeyChainToList(strippedKeychainList, keychainPath)
+
+		// Set keychain search path
+		args := []string{"-v", "list-keychains", "-s"}
+		args = append(args, strippedKeychainList...)
+
+		listKeychainsOut, err = runCommandAndReturnCombinedStdoutAndStderr("security", args...)
+		if err != nil {
+			PrintErrorlnf("Command failed, output: %s", listKeychainsOut)
+			printFatallnf(1, "Command failed, err: %s", err)
+		}
+
+		// Set the default keychain
+		defaultKeychainOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "default-keychain", "-s", keychainPath)
+		if err != nil {
+			PrintErrorlnf("Command failed, output: %s", defaultKeychainOut)
+			printFatallnf(1, "Command failed, err: %s", err)
+		}
+
+		// Unlock the specified keychain
+		unlockOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "unlock-keychain", "-p", keychainPassword, keychainPath)
+		if err != nil {
+			PrintErrorlnf("Command failed, output: %s", unlockOut)
+			printFatallnf(1, "Command failed, err: %s", err)
+		}
+
+		for cert, pass := range certificatePassphraseMap {
+			certificateIdentity, err := certificateFriendlyName(cert, pass)
+			if err != nil {
+				PrintErrorlnf("Failed to get cert identity, output: %s", certificateIdentity)
+				printFatallnf(1, "Failed to get cert identity, err: %s", err)
+			}
+			if certificateIdentity == "" {
+				printFatallnf(1, "Failed to get cert identity")
+			}
+
+			Printlnf("   Installed certificate: %s", certificateIdentity)
+		}
+
+		certs, err := availableCertificates(keychainPath)
+		if err != nil {
+			printFatallnf(1, "Failed to get certificate list, err:%s", err)
+		}
+		if len(certs) == 0 {
+			printFatallnf(1, "Failed to import certificate, no certificates found")
+		}
+
+		fmt.Println()
+		Printlnf("Available certificates:")
+		fmt.Println("-----------------------")
+		for _, cert := range certs {
+			Printlnf(" * %s", cert)
+		}
+	} else {
+		Printlnf("[!] NO Certificate provided")
 	}
 
 	//
@@ -547,7 +561,13 @@ func main() {
 	fmt.Println()
 	Printlnf("Downloading & installing Provisioning Profile(s)")
 
-	provisioningProfileURLs := strings.Split(provisioningProfileURL, "|")
+	split := strings.Split(provisioningProfileURL, "|")
+	provisioningProfileURLs := []string{}
+	for _, s := range split {
+		if s != "" {
+			provisioningProfileURLs = append(provisioningProfileURLs, s)
+		}
+	}
 
 	if defaultProvisioningProfileURL != "" {
 		fmt.Println("Default Provisioning Profile given")
@@ -556,9 +576,9 @@ func main() {
 
 	profileCount := len(provisioningProfileURLs)
 	Printlnf("Provided Provisioning Profile count: %d", profileCount)
-	fmt.Println()
 
 	for idx, profileURL := range provisioningProfileURLs {
+		fmt.Println()
 		Printlnf("=> Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
 		provisioningProfileExt := "provisionprofile"
@@ -597,6 +617,11 @@ func main() {
 			PrintErrorlnf("Command failed, output: %s", out)
 			printFatallnf(1, "Command failed, err: %s", err)
 		}
+	}
+
+	if len(provisioningProfileURLs) == 0 {
+		fmt.Println()
+		Printlnf("[!] NO Provisioning Profile provided")
 	}
 
 	fmt.Println()
