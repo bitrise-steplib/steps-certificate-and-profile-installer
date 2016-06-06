@@ -156,24 +156,6 @@ func TestStip(t *testing.T) {
 	}
 }
 
-/*
-func addKeyChainToList(keyChainList []string, keyChain string) []string {
-	keyChainMap := map[string]bool{}
-
-	for _, aKeyChain := range keyChainList {
-		keyChainMap[aKeyChain] = true
-	}
-	keyChainMap[keyChain] = true
-
-	keyChains := []string{}
-	for aKeyChain := range keyChainMap {
-		keyChains = append(keyChains, aKeyChain)
-	}
-
-	return keyChains
-}
-*/
-
 func arrayEquals(a1, a2 []string) bool {
 	if len(a1) != len(a2) {
 		Printlnf("a1: %d - a2: %d", len(a1), len(a2))
@@ -224,6 +206,89 @@ func TestAddKeyChainToList(t *testing.T) {
 		expected := []string{"a", "b"}
 		got := addKeyChainToList(list, item)
 		if !arrayEquals(got, expected) {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+}
+
+func TestSecureInput(t *testing.T) {
+	t.Log("secure empty")
+	{
+		expected := ""
+		got := secureInput("")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure SHORT (<6) password")
+	{
+		expected := "***"
+		got := secureInput("test")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure (>6) password")
+	{
+		expected := "***"
+		got := secureInput("asdfghjk")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure SHORT (<6) url")
+	{
+		expected := "http://***"
+		got := secureInput("http://te.hu")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure url")
+	{
+		expected := "http://t***u"
+		got := secureInput("http://test.hu")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure LONG url")
+	{
+		expected := "http://tes***.hu"
+		got := secureInput("http://test/alpha/beta.hu")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure SHORT (<6) path")
+	{
+		expected := "file://***"
+		got := secureInput("file://test")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure path")
+	{
+		expected := "file://t***a"
+		got := secureInput("file://test/beta")
+		if got != expected {
+			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
+		}
+	}
+
+	t.Log("secure LONG path")
+	{
+		expected := "file://tes***eta"
+		got := secureInput("file://test/apha/beta")
+		if got != expected {
 			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
 		}
 	}
