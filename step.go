@@ -346,11 +346,6 @@ func main() {
 
 	//
 	// Required parameters
-	certificateURL, err := validateRequiredInput("certificate_url")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-
 	keychainPath, err := validateRequiredInput("keychain_path")
 	if err != nil {
 		log.Fatalf("Input validation failed, err: %s", err)
@@ -361,14 +356,12 @@ func main() {
 		log.Fatalf("Input validation failed, err: %s", err)
 	}
 
-	provisioningProfileURL, err := validateRequiredInput("provisioning_profile_url")
-	if err != nil {
-		log.Fatalf("Input validation failed, err: %s", err)
-	}
-
 	//
 	// Optional parameters
+	certificateURL := os.Getenv("certificate_url")
 	certificatePassphrase := os.Getenv("certificate_passphrase")
+	provisioningProfileURL := os.Getenv("provisioning_profile_url")
+
 	defaultdefaultCertificateURL := os.Getenv("default_certificate_url")
 	defaultCertificatePassphrase := os.Getenv("default_certificate_passphrase")
 	defaultProvisioningProfileURL := os.Getenv("default_provisioning_profile_url")
@@ -382,6 +375,49 @@ func main() {
 		defaultdefaultCertificateURL,
 		defaultCertificatePassphrase,
 		defaultProvisioningProfileURL)
+
+	// Validate Certificates
+	certificateURLPassphraseMap := map[string]string{}
+
+	if certificateURL != "" {
+		certificateURLPassphraseMap[certificateURL] = certificatePassphrase
+	}
+
+	if defaultdefaultCertificateURL != "" {
+		fmt.Println("Default Certificate given")
+		certificateURLPassphraseMap[defaultdefaultCertificateURL] = defaultCertificatePassphrase
+	}
+
+	certificateCount := len(certificateURLPassphraseMap)
+	Printlnf("Provided Certificate count: %d", certificateCount)
+	fmt.Println()
+
+	if certificateCount == 0 {
+		printFatallnf(1, "No Certificate provided")
+	}
+
+	// Validate Provisioning Profiles
+	split := strings.Split(provisioningProfileURL, "|")
+
+	provisioningProfileURLs := []string{}
+	for _, s := range split {
+		if s != "" {
+			provisioningProfileURLs = append(provisioningProfileURLs, s)
+		}
+	}
+
+	if defaultProvisioningProfileURL != "" {
+		fmt.Println("Default Provisioning Profile given")
+		provisioningProfileURLs = append(provisioningProfileURLs, defaultProvisioningProfileURL)
+	}
+
+	profileCount := len(provisioningProfileURLs)
+	Printlnf("Provided Provisioning Profile count: %d", profileCount)
+	fmt.Println()
+
+	if profileCount == 0 {
+		printFatallnf(1, "No Provisioning Profile provided")
+	}
 
 	//
 	// Init
@@ -417,19 +453,6 @@ func main() {
 	// Download certificate
 	fmt.Println()
 	Printlnf("Downloading & installing Certificate(s)")
-
-	certificateURLPassphraseMap := map[string]string{
-		certificateURL: certificatePassphrase,
-	}
-
-	if defaultdefaultCertificateURL != "" {
-		fmt.Println("Default Certificate given")
-		certificateURLPassphraseMap[defaultdefaultCertificateURL] = defaultCertificatePassphrase
-	}
-
-	certificateCount := len(certificateURLPassphraseMap)
-	Printlnf("Provided Certificate count: %d", certificateCount)
-	fmt.Println()
 
 	certificatePassphraseMap := map[string]string{}
 	idx := 0
@@ -540,16 +563,6 @@ func main() {
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 	fmt.Println()
 	Printlnf("Downloading & installing Provisioning Profile(s)")
-
-	provisioningProfileURLs := strings.Split(provisioningProfileURL, "|")
-
-	if defaultProvisioningProfileURL != "" {
-		fmt.Println("Default Provisioning Profile given")
-		provisioningProfileURLs = append(provisioningProfileURLs, defaultProvisioningProfileURL)
-	}
-
-	profileCount := len(provisioningProfileURLs)
-	Printlnf("Provided Provisioning Profile count: %d", profileCount)
 	fmt.Println()
 
 	for idx, profileURL := range provisioningProfileURLs {
