@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 //--------------------
@@ -71,33 +72,22 @@ func printConfig(
 	defaultCertificateURL,
 	defaultCertificatePassphrase,
 	defaultProvisioningProfileURL string) {
+
 	fmt.Println()
 	fmt.Println("Configs:")
 	fmt.Println("--------")
-	if certificateURL != "" {
-		Printlnf(" * certificate_url: ***")
-	}
-	if certificatePassphrase != "" {
-		Printlnf(" * certificate_passphrase: ***")
-	}
-	if defaultCertificateURL != "" {
-		Printlnf(" * default_certificate_url: ***")
-	}
-	if defaultCertificatePassphrase != "" {
-		Printlnf(" * default_certificate_passphrase: ***")
-	}
-	if defaultProvisioningProfileURL != "" {
-		Printlnf(" * default_provisioning_profile_url: ****")
-	}
-	if provisioningProfileURL != "" {
-		Printlnf(" * provisioning_profile_url: ***")
-	}
-	if keychainPath != "" {
-		Printlnf(" * keychain_path: %s", keychainPath)
-	}
-	if keychainPassword != "" {
-		Printlnf(" * keychain_password: ***")
-	}
+
+	Printlnf(" * keychain_path: %s", keychainPath)
+	Printlnf(" * keychain_password: %s", secureInput(keychainPassword))
+
+	Printlnf(" * certificate_url: %s", secureInput(certificateURL))
+	Printlnf(" * certificate_passphrase: %s", secureInput(certificatePassphrase))
+	Printlnf(" * provisioning_profile_url: %s", secureInput(provisioningProfileURL))
+
+	Printlnf(" * default_certificate_url: %s", secureInput(defaultCertificateURL))
+	Printlnf(" * default_certificate_passphrase: %s", secureInput(defaultCertificatePassphrase))
+	Printlnf(" * default_provisioning_profile_url: %s", secureInput(defaultProvisioningProfileURL))
+
 	fmt.Println()
 }
 
@@ -113,7 +103,7 @@ func downloadFile(destionationPath, URL string) error {
 
 	tmpDstFilePath := ""
 	if scheme != "file" {
-		Printlnf("   Downloading (***) to (%s)", destionationPath)
+		Printlnf("   Downloading (%s) to (%s)", secureInput(URL), destionationPath)
 
 		tmpDir, err := normalizedOSTempDirPath("download")
 		if err != nil {
@@ -156,7 +146,7 @@ func downloadFile(destionationPath, URL string) error {
 
 		tmpDstFilePath = tmpDstFile.Name()
 	} else {
-		Printlnf("   Moving (***) to (%s)", destionationPath)
+		Printlnf("   Moving (%s) to (%s)", secureInput(URL), destionationPath)
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
@@ -274,51 +264,8 @@ func availableCertificates(keychainPath string) ([]string, error) {
 }
 
 func strip(str string) string {
-	dirty := true
-	strippedStr := str
-	for dirty {
-		hasWhiteSpacePrefix := false
-		if strings.HasPrefix(strippedStr, " ") {
-			hasWhiteSpacePrefix = true
-			strippedStr = strings.TrimPrefix(strippedStr, " ")
-		}
-
-		hasWhiteSpaceSuffix := false
-		if strings.HasSuffix(strippedStr, " ") {
-			hasWhiteSpaceSuffix = true
-			strippedStr = strings.TrimSuffix(strippedStr, " ")
-		}
-
-		hasNewlinePrefix := false
-		if strings.HasPrefix(strippedStr, "\n") {
-			hasNewlinePrefix = true
-			strippedStr = strings.TrimPrefix(strippedStr, "\n")
-		}
-
-		hasNewlineSuffix := false
-		if strings.HasSuffix(strippedStr, "\n") {
-			hasNewlinePrefix = true
-			strippedStr = strings.TrimSuffix(strippedStr, "\n")
-		}
-
-		hasQuotationPrefix := false
-		if strings.HasPrefix(strippedStr, "\"") {
-			hasQuotationPrefix = true
-			strippedStr = strings.TrimPrefix(strippedStr, "\"")
-		}
-
-		hasQuotationSuffix := false
-		if strings.HasSuffix(strippedStr, "\"") {
-			hasQuotationSuffix = true
-			strippedStr = strings.TrimSuffix(strippedStr, "\"")
-		}
-
-		if !hasWhiteSpacePrefix && !hasWhiteSpaceSuffix &&
-			!hasNewlinePrefix && !hasNewlineSuffix &&
-			!hasQuotationPrefix && !hasQuotationSuffix {
-			dirty = false
-		}
-	}
+	strippedStr := strings.TrimSpace(str)
+	strippedStr = strings.Trim(strippedStr, "\"")
 	return strippedStr
 }
 
@@ -337,6 +284,53 @@ func addKeyChainToList(keyChainList []string, keyChain string) []string {
 	}
 
 	return keyChains
+}
+
+func secureInput(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	secureStr := func(s string, show int) string {
+		runeCount := utf8.RuneCountInString(s)
+		if runeCount < 6 || show == 0 {
+			return strings.Repeat("*", 3)
+		}
+		if show*4 > runeCount {
+			show = 1
+		}
+
+		sec := fmt.Sprintf("%s%s%s", s[0:show], strings.Repeat("*", 3), s[len(s)-show:len(s)])
+		return sec
+	}
+
+	prefix := ""
+	cont := str
+	sec := secureStr(cont, 0)
+
+	if strings.HasPrefix(str, "file://") {
+		prefix = "file://"
+		cont = strings.TrimPrefix(str, prefix)
+		sec = secureStr(cont, 3)
+	} else if strings.HasPrefix(str, "http://www.") {
+		prefix = "http://www."
+		cont = strings.TrimPrefix(str, prefix)
+		sec = secureStr(cont, 3)
+	} else if strings.HasPrefix(str, "https://www.") {
+		prefix = "https://www."
+		cont = strings.TrimPrefix(str, prefix)
+		sec = secureStr(cont, 3)
+	} else if strings.HasPrefix(str, "http://") {
+		prefix = "http://"
+		cont = strings.TrimPrefix(str, prefix)
+		sec = secureStr(cont, 3)
+	} else if strings.HasPrefix(str, "https://") {
+		prefix = "https://"
+		cont = strings.TrimPrefix(str, prefix)
+		sec = secureStr(cont, 3)
+	}
+
+	return prefix + sec
 }
 
 //--------------------
