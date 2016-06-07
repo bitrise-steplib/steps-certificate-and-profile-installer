@@ -1,6 +1,14 @@
-## Changelog (Current version: 1.5.0)
+## Changelog (Current version: 1.5.1)
 
 -----------------
+
+### 1.5.1 (2016 Jun 07)
+
+* [c9c9925] prepare for 1.5.1
+* [b7abc0b] Merge pull request #15 from bitrise-io/required_fix
+* [82264aa] Trim fix
+* [6aa0b6d] secure inputs
+* [337fdbc] do not require certificate_url & provisioning_profile_url
 
 ### 1.5.0 (2016 Jun 01)
 
@@ -93,4 +101,4 @@
 
 -----------------
 
-Updated: 2016 Jun 01
+Updated: 2016 Jun 07
