@@ -265,8 +265,7 @@ func availableCertificates(keychainPath string) ([]string, error) {
 
 func strip(str string) string {
 	strippedStr := strings.TrimSpace(str)
-	strippedStr = strings.TrimPrefix(strippedStr, "\"")
-	strippedStr = strings.TrimSuffix(strippedStr, "\"")
+	strippedStr = strings.Trim(strippedStr, "\"")
 	return strippedStr
 }
 
