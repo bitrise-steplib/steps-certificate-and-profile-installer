@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.5.1)
+## Changelog (Current version: 1.5.2)
 
 -----------------
+
+### 1.5.2 (2016 Jun 07)
+
+* [a4de9ff] prepare for 1.5.2
+* [47e3d69] Merge pull request #16 from bitrise-io/input_validation
+* [6a61447] cert and profile count validation
 
 ### 1.5.1 (2016 Jun 07)
 
