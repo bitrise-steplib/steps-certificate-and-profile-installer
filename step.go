@@ -457,6 +457,7 @@ func main() {
 	certificatePassphraseMap := map[string]string{}
 	idx := 0
 	for certURL, pass := range certificateURLPassphraseMap {
+		fmt.Println()
 		Printlnf("=> Downloading certificate: %d/%d", idx+1, certificateCount)
 
 		certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
@@ -563,9 +564,9 @@ func main() {
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 	fmt.Println()
 	Printlnf("Downloading & installing Provisioning Profile(s)")
-	fmt.Println()
 
 	for idx, profileURL := range provisioningProfileURLs {
+		fmt.Println()
 		Printlnf("=> Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
 		provisioningProfileExt := "provisionprofile"
