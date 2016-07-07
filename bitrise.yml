@@ -14,6 +14,10 @@ workflows:
   # --- workflow to Step Test
   test:
     steps:
+    - script:
+        title: Step audit
+        inputs:
+        - content: stepman audit --step-yml=./step.yml
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         description: |-
@@ -33,6 +37,7 @@ workflows:
         - provisioning_profile_url: $BITRISE_PROVISION_URL
         - keychain_path: $HOME/Library/Keychains/login.keychain
         - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
+        - export_certificate_and_profile_infos: "true"
 
   # ----------------------------------------------------------------
   # --- workflows to create Release

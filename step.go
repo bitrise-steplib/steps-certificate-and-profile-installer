@@ -33,6 +33,14 @@ func Printlnf(format string, a ...interface{}) {
 	fmt.Println()
 }
 
+func exportEnvironmentWithEnvman(keyStr, valueStr string) error {
+	envman := exec.Command("envman", "add", "--key", keyStr)
+	envman.Stdin = strings.NewReader(valueStr)
+	envman.Stdout = os.Stdout
+	envman.Stderr = os.Stderr
+	return envman.Run()
+}
+
 func normalizedOSTempDirPath(tmpDirNamePrefix string) (retPth string, err error) {
 	retPth, err = ioutil.TempDir("", tmpDirNamePrefix)
 	if strings.HasSuffix(retPth, "/") {
@@ -71,7 +79,8 @@ func printConfig(
 	keychainPassword,
 	defaultCertificateURL,
 	defaultCertificatePassphrase,
-	defaultProvisioningProfileURL string) {
+	defaultProvisioningProfileURL,
+	exportCertificateAndProfileInfos string) {
 
 	fmt.Println()
 	fmt.Println("Configs:")
@@ -88,6 +97,8 @@ func printConfig(
 	Printlnf(" * default_certificate_passphrase: %s", secureInput(defaultCertificatePassphrase))
 	Printlnf(" * default_provisioning_profile_url: %s", secureInput(defaultProvisioningProfileURL))
 
+	Printlnf(" * export_certificate_and_profile_infos: %s", exportCertificateAndProfileInfos)
+
 	fmt.Println()
 }
 
@@ -98,8 +109,6 @@ func downloadFile(destionationPath, URL string) error {
 	}
 
 	scheme := url.Scheme
-	tokens := strings.Split(URL, "/")
-	fileName := tokens[len(tokens)-1]
 
 	tmpDstFilePath := ""
 	if scheme != "file" {
@@ -109,7 +118,8 @@ func downloadFile(destionationPath, URL string) error {
 		if err != nil {
 			return err
 		}
-		tmpDst := path.Join(tmpDir, fileName)
+
+		tmpDst := path.Join(tmpDir, "tmp_file")
 		tmpDstFile, err := os.Create(tmpDst)
 		if err != nil {
 			return err
@@ -366,6 +376,8 @@ func main() {
 	defaultCertificatePassphrase := os.Getenv("default_certificate_passphrase")
 	defaultProvisioningProfileURL := os.Getenv("default_provisioning_profile_url")
 
+	exportCertificateAndProfileInfos := os.Getenv("export_certificate_and_profile_infos")
+
 	printConfig(
 		certificateURL,
 		certificatePassphrase,
@@ -374,7 +386,8 @@ func main() {
 		keychainPassword,
 		defaultdefaultCertificateURL,
 		defaultCertificatePassphrase,
-		defaultProvisioningProfileURL)
+		defaultProvisioningProfileURL,
+		exportCertificateAndProfileInfos)
 
 	// Validate Certificates
 	certificateURLPassphraseMap := map[string]string{}
@@ -531,6 +544,8 @@ func main() {
 		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
+	certificateIndentityToExport := ""
+
 	for cert, pass := range certificatePassphraseMap {
 		certificateIdentity, err := certificateFriendlyName(cert, pass)
 		if err != nil {
@@ -540,6 +555,7 @@ func main() {
 		if certificateIdentity == "" {
 			printFatallnf(1, "Failed to get cert identity")
 		}
+		certificateIndentityToExport = certificateIdentity
 
 		Printlnf("   Installed certificate: %s", certificateIdentity)
 	}
@@ -550,6 +566,14 @@ func main() {
 	}
 	if len(certs) == 0 {
 		printFatallnf(1, "Failed to import certificate, no certificates found")
+	}
+
+	if exportCertificateAndProfileInfos == "true" && len(certificatePassphraseMap) == 1 {
+		fmt.Println()
+		Printlnf("=> Exporting BITRISE_CODE_SIGN_IDENTITY, value: %s", certificateIndentityToExport)
+		if err := exportEnvironmentWithEnvman("BITRISE_CODE_SIGN_IDENTITY", certificateIndentityToExport); err != nil {
+			println("Failed to export BITRISE_CODE_SIGN_IDENTITY")
+		}
 	}
 
 	fmt.Println()
@@ -564,6 +588,9 @@ func main() {
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 	fmt.Println()
 	Printlnf("Downloading & installing Provisioning Profile(s)")
+
+	provisioningProfileUUIDToExport := ""
+	provisioningProfilePthToExport := ""
 
 	for idx, profileURL := range provisioningProfileURLs {
 		fmt.Println()
@@ -596,14 +623,31 @@ func main() {
 			printFatallnf(1, "Command failed, err: %s", err)
 		}
 
+		provisioningProfileUUIDToExport = profileUUID
+
 		Printlnf("   Installed Profile UUID: %s", profileUUID)
 		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
+
+		provisioningProfilePthToExport = profileFinalPth
 
 		Printlnf("   Moving it to: %s", profileFinalPth)
 
 		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpPath, profileFinalPth); err != nil {
 			PrintErrorlnf("Command failed, output: %s", out)
 			printFatallnf(1, "Command failed, err: %s", err)
+		}
+	}
+
+	if exportCertificateAndProfileInfos == "true" && len(provisioningProfileURLs) == 1 {
+		fmt.Println()
+		Printlnf("=> Exporting BITRISE_PROVISIONING_PROFILE_ID, value: %s", provisioningProfileUUIDToExport)
+		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_ID", provisioningProfileUUIDToExport); err != nil {
+			println("Failed to export BITRISE_PROVISIONING_PROFILE_ID")
+		}
+
+		Printlnf("=> Exporting BITRISE_PROVISIONING_PROFILE_PATH, value: %s", provisioningProfilePthToExport)
+		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_PATH", provisioningProfilePthToExport); err != nil {
+			println("Failed to export BITRISE_PROVISIONING_PROFILE_PATH")
 		}
 	}
 
