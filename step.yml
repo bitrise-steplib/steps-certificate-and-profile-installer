@@ -84,8 +84,12 @@ inputs:
 
         __Notes__:
 
-        - BITRISE_PROVISIONING_PROFILE_ID and BITRISE_PROVISIONING_PROFILE_PATH:  
-          Will only export the Profile ID and path if you specify a __single__ Provisioning Profile!
+        - BITRISE_PROVISIONING_PROFILE_ID and BITRISE_PROVISIONING_PROFILE_PATH:    
+          Will only export the Profile ID and path if you specify a __single__ Provisioning Profile URL as `provisioning_profile_url` input value, or
+          if you leave `provisioning_profile_url` empty, then Default Provisioning Profile will be exported (if defined)!
+        - BITRISE_CODE_SIGN_IDENTITY:  
+          Will export the Certificate Identity defined with `certificate_url`, if `certificate_url` is empty, then 
+          default Certificate Identity will be exported (if defined)!
         - __Do not use this input if it is not neccessery__, instead specify the profiles direct where you want to use them:  
           __Code Signing Identity may contains special characters, exporting these as an environment variable could break the next steps.__
       value_options:

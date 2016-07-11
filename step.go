@@ -372,7 +372,7 @@ func main() {
 	userCertificatePassphrase := os.Getenv("certificate_passphrase")
 	userProvisioningProfileURL := os.Getenv("provisioning_profile_url")
 
-	defaultdefaultCertificateURL := os.Getenv("default_certificate_url")
+	defaultCertificateURL := os.Getenv("default_certificate_url")
 	defaultCertificatePassphrase := os.Getenv("default_certificate_passphrase")
 	defaultProvisioningProfileURL := os.Getenv("default_provisioning_profile_url")
 
@@ -384,7 +384,7 @@ func main() {
 		userProvisioningProfileURL,
 		keychainPath,
 		keychainPassword,
-		defaultdefaultCertificateURL,
+		defaultCertificateURL,
 		defaultCertificatePassphrase,
 		defaultProvisioningProfileURL,
 		exportCertificateAndProfileInfos)
@@ -396,9 +396,9 @@ func main() {
 		certificateURLPassphraseMap[userCertificateURL] = userCertificatePassphrase
 	}
 
-	if defaultdefaultCertificateURL != "" {
+	if defaultCertificateURL != "" {
 		fmt.Println("Default Certificate given")
-		certificateURLPassphraseMap[defaultdefaultCertificateURL] = defaultCertificatePassphrase
+		certificateURLPassphraseMap[defaultCertificateURL] = defaultCertificatePassphrase
 	}
 
 	certificateCount := len(certificateURLPassphraseMap)
@@ -418,6 +418,8 @@ func main() {
 			provisioningProfileURLs = append(provisioningProfileURLs, s)
 		}
 	}
+
+	userProvisioningProfileCount := len(provisioningProfileURLs)
 
 	if defaultProvisioningProfileURL != "" {
 		fmt.Println("Default Provisioning Profile given")
@@ -550,7 +552,7 @@ func main() {
 		printFatallnf(1, "Command failed, err: %s", err)
 	}
 
-	userCertificateIndentity := ""
+	certificateIndentityToExport := ""
 
 	for cert, pass := range certificatePassphraseMap {
 		certificateIdentity, err := certificateFriendlyName(cert, pass)
@@ -562,8 +564,12 @@ func main() {
 			printFatallnf(1, "Failed to get cert identity")
 		}
 
-		if cert == userCertificatePth {
-			userCertificateIndentity = certificateIdentity
+		if userCertificatePth != "" {
+			if cert == userCertificatePth {
+				certificateIndentityToExport = certificateIdentity
+			}
+		} else {
+			certificateIndentityToExport = certificateIdentity
 		}
 
 		Printlnf("   Installed certificate: %s", certificateIdentity)
@@ -577,10 +583,10 @@ func main() {
 		printFatallnf(1, "Failed to import certificate, no certificates found")
 	}
 
-	if exportCertificateAndProfileInfos == "true" && userCertificateIndentity != "" {
+	if exportCertificateAndProfileInfos == "true" && certificateIndentityToExport != "" {
 		fmt.Println()
-		Printlnf("=> Exporting BITRISE_CODE_SIGN_IDENTITY, value: %s", userCertificateIndentity)
-		if err := exportEnvironmentWithEnvman("BITRISE_CODE_SIGN_IDENTITY", userCertificateIndentity); err != nil {
+		Printlnf("=> Exporting BITRISE_CODE_SIGN_IDENTITY, value: %s", certificateIndentityToExport)
+		if err := exportEnvironmentWithEnvman("BITRISE_CODE_SIGN_IDENTITY", certificateIndentityToExport); err != nil {
 			println("Failed to export BITRISE_CODE_SIGN_IDENTITY")
 		}
 	}
@@ -598,8 +604,8 @@ func main() {
 	fmt.Println()
 	Printlnf("Downloading & installing Provisioning Profile(s)")
 
-	userProvisioningProfileUUID := ""
-	userProvisioningProfilePth := ""
+	provisioningProfileUUIDToExport := ""
+	provisioningProfilePthToExport := ""
 
 	for idx, profileURL := range provisioningProfileURLs {
 		fmt.Println()
@@ -635,9 +641,14 @@ func main() {
 		Printlnf("   Installed Profile UUID: %s", profileUUID)
 		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
 
-		if profileURL == userProvisioningProfileURL {
-			userProvisioningProfilePth = profileFinalPth
-			userProvisioningProfileUUID = profileUUID
+		if userProvisioningProfileURL != "" {
+			if userProvisioningProfileCount == 1 && profileURL == userProvisioningProfileURL {
+				provisioningProfilePthToExport = profileFinalPth
+				provisioningProfileUUIDToExport = profileUUID
+			}
+		} else {
+			provisioningProfilePthToExport = profileFinalPth
+			provisioningProfileUUIDToExport = profileUUID
 		}
 
 		Printlnf("   Moving it to: %s", profileFinalPth)
@@ -648,17 +659,17 @@ func main() {
 		}
 	}
 
-	if exportCertificateAndProfileInfos == "true" && userProvisioningProfileUUID != "" {
+	if exportCertificateAndProfileInfos == "true" && provisioningProfileUUIDToExport != "" {
 		fmt.Println()
-		Printlnf("=> Exporting BITRISE_PROVISIONING_PROFILE_ID, value: %s", userProvisioningProfileUUID)
-		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_ID", userProvisioningProfileUUID); err != nil {
+		Printlnf("=> Exporting BITRISE_PROVISIONING_PROFILE_ID, value: %s", provisioningProfileUUIDToExport)
+		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_ID", provisioningProfileUUIDToExport); err != nil {
 			println("Failed to export BITRISE_PROVISIONING_PROFILE_ID")
 		}
 	}
 
-	if exportCertificateAndProfileInfos == "true" && userProvisioningProfilePth != "" {
-		Printlnf("=> Exporting BITRISE_PROVISIONING_PROFILE_PATH, value: %s", userProvisioningProfilePth)
-		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_PATH", userProvisioningProfilePth); err != nil {
+	if exportCertificateAndProfileInfos == "true" && provisioningProfilePthToExport != "" {
+		Printlnf("=> Exporting BITRISE_PROVISIONING_PROFILE_PATH, value: %s", provisioningProfilePthToExport)
+		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_PATH", provisioningProfilePthToExport); err != nil {
 			println("Failed to export BITRISE_PROVISIONING_PROFILE_PATH")
 		}
 	}
