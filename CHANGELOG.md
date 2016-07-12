@@ -1,6 +1,16 @@
-## Changelog (Current version: 1.5.2)
+## Changelog (Current version: 1.6.0)
 
 -----------------
+
+### 1.6.0 (2016 Jul 12)
+
+* [df0f7d1] prepare for 1.6.0
+* [2941a37] Merge pull request #18 from bitrise-io/export_certificates
+* [46742b9] export certificates fix
+* [7bf5067] export user cert
+* [0d7cbcb] export certificate infos
+* [3cdb6e9] Merge pull request #17 from bitrise-io/log_review
+* [d85b0ae] log updates
 
 ### 1.5.2 (2016 Jun 07)
 
@@ -107,4 +117,4 @@
 
 -----------------
 
-Updated: 2016 Jun 07
+Updated: 2016 Jul 12
