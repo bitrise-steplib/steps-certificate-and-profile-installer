@@ -334,9 +334,6 @@ func secureInput(str string) string {
 }
 
 func readProfileInfos(profilePth string) (string, error) {
-	cmdSlice := []string{"security", "cms", "-D", "-i", profilePth}
-	log.Done(cmdex.PrintableCommandArgs(false, cmdSlice))
-
 	profileContent, err := cmdex.NewCommand("security", "cms", "-D", "-i", profilePth).RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("Failed to print profile infos, out,: %s, error: %s", profileContent, err)
@@ -408,8 +405,6 @@ func main() {
 	// Validate Provisioning Profiles
 	provisioningProfileURLs := strings.Split(configs.ProvisioningProfileURL, "|")
 
-	userProvisioningProfileCount := len(provisioningProfileURLs)
-
 	if configs.DefaultProvisioningProfileURL != "" {
 		log.Detail("Default Provisioning Profile given")
 		provisioningProfileURLs = append(provisioningProfileURLs, configs.DefaultProvisioningProfileURL)
@@ -463,8 +458,6 @@ func main() {
 	fmt.Println()
 	log.Info("Downloading & installing Certificate(s)")
 
-	userCertificatePth := ""
-
 	certificatePassphraseMap := map[string]string{}
 	idx := 0
 	for certURL, pass := range certificateURLPassphraseMap {
@@ -477,10 +470,6 @@ func main() {
 			os.Exit(1)
 		}
 		certificatePassphraseMap[certPath] = pass
-
-		if certURL == configs.CertificateURL {
-			userCertificatePth = certPath
-		}
 
 		idx++
 	}
@@ -553,8 +542,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	certificateIndentityToExport := ""
-
 	for cert, pass := range certificatePassphraseMap {
 		certificateIdentity, err := certificateFriendlyName(cert, pass)
 		if err != nil {
@@ -565,14 +552,6 @@ func main() {
 		if certificateIdentity == "" {
 			log.Error("Failed to get cert identity")
 			os.Exit(1)
-		}
-
-		if userCertificatePth != "" {
-			if cert == userCertificatePth {
-				certificateIndentityToExport = certificateIdentity
-			}
-		} else {
-			certificateIndentityToExport = certificateIdentity
 		}
 
 		log.Done("   Installed certificate: %s", certificateIdentity)
@@ -600,9 +579,6 @@ func main() {
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 	fmt.Println()
 	log.Info("Downloading & installing Provisioning Profile(s)")
-
-	provisioningProfileUUIDToExport := ""
-	provisioningProfilePthToExport := ""
 
 	for idx, profileURL := range provisioningProfileURLs {
 		fmt.Println()
@@ -651,16 +627,6 @@ func main() {
 
 		log.Done("   Installed Profile UUID: %s", profileUUID)
 		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
-
-		if configs.ProvisioningProfileURL != "" {
-			if userProvisioningProfileCount == 1 && profileURL == configs.ProvisioningProfileURL {
-				provisioningProfilePthToExport = profileFinalPth
-				provisioningProfileUUIDToExport = profileUUID
-			}
-		} else {
-			provisioningProfilePthToExport = profileFinalPth
-			provisioningProfileUUIDToExport = profileUUID
-		}
 
 		log.Detail("   Moving it to: %s", profileFinalPth)
 
