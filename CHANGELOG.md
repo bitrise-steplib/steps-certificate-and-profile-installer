@@ -1,6 +1,14 @@
-## Changelog (Current version: 1.6.0)
+## Changelog (Current version: 1.7.0)
 
 -----------------
+
+### 1.7.0 (2016 Sep 15)
+
+* [2b84a29] prepare for 1.7.0
+* from now you can specify multiple `certificate_url` separated with pipe character
+* from now you can specify multiple `certificate_passphrase` separated with pipe character
+* printing installed profile's infos 
+* [f267551] Toolkit (#19)
 
 ### 1.6.0 (2016 Jul 12)
 
@@ -117,4 +125,4 @@
 
 -----------------
 
-Updated: 2016 Jul 12
+Updated: 2016 Sep 15
