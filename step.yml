@@ -45,7 +45,7 @@ inputs:
         Certificate passphrase. Multiple passphrases can be
         specified, separated by a pipe (`|`) character.
 
-        Specified Certificate passphrase count should qual to the count of the certificate urls.
+        Specified Certificate passphrase count should match the count of the certificate urls.
 
         Format example:
 

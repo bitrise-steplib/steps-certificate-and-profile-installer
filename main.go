@@ -350,7 +350,7 @@ func readProfileInfos(profilePth string) (string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return "", err
+		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
 	}
 
 	return strings.Join(lines, "\n"), nil
