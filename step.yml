@@ -33,7 +33,8 @@ inputs:
     opts:
       title: "Certificate URL"
       description: |
-        URL of the certificate to download.
+        URL of the certificate to download. Multiple URLs can be
+        specified, separated by a pipe (`|`) character.
 
         You can specify a local path as well, using the `file://` scheme.
         Example: `file://./Cert.p12`
@@ -41,7 +42,17 @@ inputs:
     opts:
       title: "Certificate passphrase"
       description: |
-        Certificate passphrase
+        Certificate passphrase. Multiple passphrases can be
+        specified, separated by a pipe (`|`) character.
+
+        Specified Certificate passphrase count should qual to the count of the certificate urls.
+
+        Format example:
+
+        - 1 certificate provided with passphrase: `PASS`
+        - 1 certificate provided without passphrase: ``
+        - 3 certificates provided, none of them has passphrase: `||`
+        - 3 certificates provided, only the 2. one has passphrase: `|PASS|`
   - provisioning_profile_url: $BITRISE_PROVISION_URL
     opts:
       title: "Provisioning profile URL"

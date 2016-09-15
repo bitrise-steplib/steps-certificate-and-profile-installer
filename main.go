@@ -353,7 +353,7 @@ func readProfileInfos(profilePth string) (string, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(strings.TrimSpace(line), "<data>") {
-			lines = append(lines, "REDICATED")
+			lines = append(lines, "REDACTED")
 		} else {
 			lines = append(lines, line)
 		}
@@ -382,7 +382,20 @@ func main() {
 	certificateURLPassphraseMap := map[string]string{}
 
 	if configs.CertificateURL != "" {
-		certificateURLPassphraseMap[configs.CertificateURL] = configs.CertificatePassphrase
+		certificateURLs := strings.Split(configs.CertificateURL, "|")
+		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
+
+		if len(certificateURLs) != len(certificatePassphrases) {
+			log.Error("Certificate url count: (%d), not equal to Certofocate Passphrase count: %d", len(certificateURLs), len(certificatePassphrases))
+			os.Exit(1)
+		}
+
+		for i := 0; i < len(certificateURLs); i++ {
+			certificateURL := certificateURLs[i]
+			certificatePassphrase := certificatePassphrases[i]
+
+			certificateURLPassphraseMap[certificateURL] = certificatePassphrase
+		}
 	}
 
 	if configs.DefaultCertificateURL != "" {
@@ -399,14 +412,7 @@ func main() {
 	}
 
 	// Validate Provisioning Profiles
-	split := strings.Split(configs.ProvisioningProfileURL, "|")
-
-	provisioningProfileURLs := []string{}
-	for _, s := range split {
-		if s != "" {
-			provisioningProfileURLs = append(provisioningProfileURLs, s)
-		}
-	}
+	provisioningProfileURLs := strings.Split(configs.ProvisioningProfileURL, "|")
 
 	userProvisioningProfileCount := len(provisioningProfileURLs)
 
