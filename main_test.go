@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -158,14 +159,14 @@ func TestStip(t *testing.T) {
 
 func arrayEquals(a1, a2 []string) bool {
 	if len(a1) != len(a2) {
-		Printlnf("a1: %d - a2: %d", len(a1), len(a2))
+		fmt.Printf("a1: %d - a2: %d\n", len(a1), len(a2))
 		return false
 	}
 
 	for i, e1 := range a1 {
 		e2 := a2[i]
 		if e1 != e2 {
-			Printlnf("e1: %d - e2: %d", e1, e2)
+			fmt.Printf("e1: %s - e2: %s\n", e1, e2)
 			return false
 		}
 	}

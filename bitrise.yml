@@ -3,6 +3,8 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - RELEASE_VERSION: 1.6.0
+  
   # define these in your .bitrise.secrets.yml
   - BITRISE_CERTIFICATE_URL: $BITRISE_CERTIFICATE_URL
   - BITRISE_CERTIFICATE_PASSPHRASE: $BITRISE_CERTIFICATE_PASSPHRASE
@@ -18,6 +20,10 @@ workflows:
         title: Step audit
         inputs:
         - content: stepman audit --step-yml=./step.yml
+    - script:
+        title: Go test
+        inputs:
+        - content: go test ./...
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         description: |-
@@ -37,25 +43,10 @@ workflows:
         - provisioning_profile_url: $BITRISE_PROVISION_URL
         - keychain_path: $HOME/Library/Keychains/login.keychain
         - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
-        - export_certificate_and_profile_infos: "true"
 
   # ----------------------------------------------------------------
   # --- workflows to create Release
   create-release:
-    steps:
-    - script:
-        title:
-        inputs:
-        - content: |
-            #!/bin/bash
-            set -e
-
-            export CI=true
-            releaseman create --bump-version patch
-
-  create-release-version:
-    envs:
-    - RELEASE_VERSION: 1.6.0
     steps:
     - script:
         title:
@@ -74,7 +65,7 @@ workflows:
       # if you want to share this step into a StepLib
       - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
       - STEP_ID_IN_STEPLIB: certificate-and-profile-installer
-      - STEP_GIT_VERION_TAG_TO_SHARE: 1.6.0
+      - STEP_GIT_VERION_TAG_TO_SHARE: $RELEASE_VERSION
       - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-certificate-and-profile-installer.git
     description: |-
       If this is the first time you try to share a Step you should
