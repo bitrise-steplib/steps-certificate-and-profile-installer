@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -164,10 +165,6 @@ func downloadFile(destionationPath, URL string) error {
 }
 
 func runCommandAndReturnCombinedStdoutAndStderr(name string, args ...string) (string, error) {
-	cmdSlice := append([]string{name}, args...)
-
-	log.Info(cmdex.PrintableCommandArgs(false, cmdSlice))
-
 	cmd := exec.Command(name, args...)
 	outBytes, err := cmd.CombinedOutput()
 	outStr := string(outBytes)
@@ -342,10 +339,30 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func printProfileInfos(profilePth string) error {
-	cmdex.NewCommand("security", "cms", "-D", "-i", profilePth)
+func readProfileInfos(profilePth string) (string, error) {
+	cmdSlice := []string{"security", "cms", "-D", "-i", profilePth}
+	log.Done(cmdex.PrintableCommandArgs(false, cmdSlice))
 
-	return nil
+	profileContent, err := cmdex.NewCommand("security", "cms", "-D", "-i", profilePth).RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("Failed to print profile infos, out,: %s, error: %s", profileContent, err)
+	}
+
+	lines := []string{}
+	scanner := bufio.NewScanner(strings.NewReader(profileContent))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(strings.TrimSpace(line), "<data>") {
+			lines = append(lines, "REDICATED")
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+
+	return strings.Join(lines, "\n"), nil
 }
 
 //--------------------
@@ -359,6 +376,7 @@ func main() {
 		log.Error("Issue with input: %s", err)
 		os.Exit(1)
 	}
+	fmt.Println()
 
 	// Validate Certificates
 	certificateURLPassphraseMap := map[string]string{}
@@ -368,13 +386,12 @@ func main() {
 	}
 
 	if configs.DefaultCertificateURL != "" {
-		fmt.Println("Default Certificate given")
+		log.Detail("Default Certificate given")
 		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
 	}
 
 	certificateCount := len(certificateURLPassphraseMap)
 	log.Detail("Provided Certificate count: %d", certificateCount)
-	fmt.Println()
 
 	if certificateCount == 0 {
 		log.Error("No Certificate provided")
@@ -394,13 +411,12 @@ func main() {
 	userProvisioningProfileCount := len(provisioningProfileURLs)
 
 	if configs.DefaultProvisioningProfileURL != "" {
-		fmt.Println("Default Provisioning Profile given")
+		log.Detail("Default Provisioning Profile given")
 		provisioningProfileURLs = append(provisioningProfileURLs, configs.DefaultProvisioningProfileURL)
 	}
 
 	profileCount := len(provisioningProfileURLs)
 	log.Detail("Provided Provisioning Profile count: %d", profileCount)
-	fmt.Println()
 
 	if profileCount == 0 {
 		log.Error("No Provisioning Profile provided")
@@ -431,7 +447,7 @@ func main() {
 		log.Error("Failed to check path (%s), err: %s", configs.KeychainPath, err)
 		os.Exit(1)
 	} else if !exist {
-		log.Detail("Creating keychain: %s", configs.KeychainPath)
+		log.Info("Creating keychain: %s", configs.KeychainPath)
 
 		if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath); err != nil {
 			log.Error("Failed to create keychain, output: %s", out)
@@ -445,7 +461,7 @@ func main() {
 	//
 	// Download certificate
 	fmt.Println()
-	log.Detail("Downloading & installing Certificate(s)")
+	log.Info("Downloading & installing Certificate(s)")
 
 	userCertificatePth := ""
 
@@ -559,7 +575,7 @@ func main() {
 			certificateIndentityToExport = certificateIdentity
 		}
 
-		log.Detail("   Installed certificate: %s", certificateIdentity)
+		log.Done("   Installed certificate: %s", certificateIdentity)
 	}
 
 	certs, err := availableCertificates(configs.KeychainPath)
@@ -582,7 +598,7 @@ func main() {
 	}
 
 	fmt.Println()
-	log.Detail("Available certificates:")
+	log.Info("Available certificates:")
 	fmt.Println("-----------------------")
 	for _, cert := range certs {
 		log.Detail(" * %s", cert)
@@ -592,7 +608,7 @@ func main() {
 	// Install provisioning profiles
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 	fmt.Println()
-	log.Detail("Downloading & installing Provisioning Profile(s)")
+	log.Info("Downloading & installing Provisioning Profile(s)")
 
 	provisioningProfileUUIDToExport := ""
 	provisioningProfilePthToExport := ""
@@ -624,6 +640,17 @@ func main() {
 		tmpProvProfilePth := path.Join(tempDir, "prov")
 		writeBytesToFileWithPermission(tmpProvProfilePth, []byte(out), 0)
 
+		profile, err := readProfileInfos(tmpPath)
+		if err != nil {
+			log.Error("Failed to read profile infos, err: %s", err)
+			os.Exit(1)
+		}
+
+		fmt.Println()
+		log.Info("Profile Infos:")
+		log.Detail("%s", profile)
+		fmt.Println()
+
 		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)
 		if err != nil {
 			log.Error("Command failed, output: %s", profileUUID)
@@ -631,7 +658,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		log.Detail("   Installed Profile UUID: %s", profileUUID)
+		log.Done("   Installed Profile UUID: %s", profileUUID)
 		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
 
 		if configs.ProvisioningProfileURL != "" {
@@ -667,7 +694,4 @@ func main() {
 			log.Error("Failed to export BITRISE_PROVISIONING_PROFILE_PATH")
 		}
 	}
-
-	fmt.Println()
-	fmt.Println("Done")
 }
