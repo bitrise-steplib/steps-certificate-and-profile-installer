@@ -91,37 +91,3 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         Example: `file://./BuildAnything.mobileprovision`
-  - export_certificate_and_profile_infos: "false"
-    opts:
-      title: "Should export Certificate and Provisioning Profile infos"
-      description: |
-        Set this input to `"true"` to allow exporting:
-
-        -  `BITRISE_PROVISIONING_PROFILE_ID`
-        -  `BITRISE_PROVISIONING_PROFILE_PATH`
-        -  `BITRISE_CODE_SIGN_IDENTITY`
-
-        __Notes__:
-
-        - BITRISE_PROVISIONING_PROFILE_ID and BITRISE_PROVISIONING_PROFILE_PATH:    
-          Will only export the Profile ID and path if you specify a __single__ Provisioning Profile URL as `provisioning_profile_url` input value, or
-          if you leave `provisioning_profile_url` empty, then Default Provisioning Profile will be exported (if defined)!
-        - BITRISE_CODE_SIGN_IDENTITY:  
-          Will export the Certificate Identity defined with `certificate_url`, if `certificate_url` is empty, then 
-          default Certificate Identity will be exported (if defined)!
-        - __Do not use this input if it is not neccessery__, instead specify the profiles direct where you want to use them:  
-          __Code Signing Identity may contains special characters, exporting these as an environment variable could break the next steps.__
-      value_options:
-      - "true"
-      - "false"
-outputs:
-- BITRISE_PROVISIONING_PROFILE_ID: null
-  opts:
-    title: Activated Provisioning Profile ID
-- BITRISE_PROVISIONING_PROFILE_PATH: null
-  opts:
-    title: Activated Provisioning Profile Path
-- BITRISE_CODE_SIGN_IDENTITY: null
-  opts:
-    title: Activated Code Signing Identity
-

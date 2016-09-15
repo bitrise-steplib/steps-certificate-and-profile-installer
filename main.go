@@ -34,8 +34,6 @@ type ConfigsModel struct {
 	DefaultCertificatePassphrase  string
 	DefaultProvisioningProfileURL string
 
-	ExportCertificateAndProfileInfos string
-
 	KeychainPath     string
 	KeychainPassword string
 }
@@ -49,8 +47,6 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		DefaultCertificateURL:         os.Getenv("default_certificate_url"),
 		DefaultCertificatePassphrase:  os.Getenv("default_certificate_passphrase"),
 		DefaultProvisioningProfileURL: os.Getenv("default_provisioning_profile_url"),
-
-		ExportCertificateAndProfileInfos: os.Getenv("export_certificate_and_profile_infos"),
 
 		KeychainPath:     os.Getenv("keychain_path"),
 		KeychainPassword: os.Getenv("keychain_password"),
@@ -67,8 +63,6 @@ func (configs ConfigsModel) print() {
 	log.Detail(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
 	log.Detail(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
 	log.Detail(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
-
-	log.Detail(" - ExportCertificateAndProfileInfos: %s", configs.ExportCertificateAndProfileInfos)
 
 	log.Detail(" - KeychainPath: %s", configs.KeychainPath)
 	log.Detail(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
@@ -594,15 +588,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if configs.ExportCertificateAndProfileInfos == "true" && certificateIndentityToExport != "" {
-		fmt.Println()
-		log.Detail("=> Exporting BITRISE_CODE_SIGN_IDENTITY, value: %s", certificateIndentityToExport)
-
-		if err := exportEnvironmentWithEnvman("BITRISE_CODE_SIGN_IDENTITY", certificateIndentityToExport); err != nil {
-			log.Error("Failed to export BITRISE_CODE_SIGN_IDENTITY")
-		}
-	}
-
 	fmt.Println()
 	log.Info("Available certificates:")
 	fmt.Println("-----------------------")
@@ -683,21 +668,6 @@ func main() {
 			log.Error("Command failed, output: %s", out)
 			log.Error("Command failed, err: %s", err)
 			os.Exit(1)
-		}
-	}
-
-	if configs.ExportCertificateAndProfileInfos == "true" && provisioningProfileUUIDToExport != "" {
-		fmt.Println()
-		log.Detail("=> Exporting BITRISE_PROVISIONING_PROFILE_ID, value: %s", provisioningProfileUUIDToExport)
-		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_ID", provisioningProfileUUIDToExport); err != nil {
-			log.Error("Failed to export BITRISE_PROVISIONING_PROFILE_ID")
-		}
-	}
-
-	if configs.ExportCertificateAndProfileInfos == "true" && provisioningProfilePthToExport != "" {
-		log.Detail("=> Exporting BITRISE_PROVISIONING_PROFILE_PATH, value: %s", provisioningProfilePthToExport)
-		if err := exportEnvironmentWithEnvman("BITRISE_PROVISIONING_PROFILE_PATH", provisioningProfilePthToExport); err != nil {
-			log.Error("Failed to export BITRISE_PROVISIONING_PROFILE_PATH")
 		}
 	}
 }
