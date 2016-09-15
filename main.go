@@ -336,7 +336,7 @@ func secureInput(str string) string {
 func readProfileInfos(profilePth string) (string, error) {
 	profileContent, err := cmdex.NewCommand("security", "cms", "-D", "-i", profilePth).RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("Failed to print profile infos, out,: %s, error: %s", profileContent, err)
+		return "", fmt.Errorf("Failed to print profile infos, out: %s, error: %s", profileContent, err)
 	}
 
 	lines := []string{}
@@ -377,7 +377,7 @@ func main() {
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
-			log.Error("Certificate url count: (%d), not equal to Certofocate Passphrase count: %d", len(certificateURLs), len(certificatePassphrases))
+			log.Error("Certificate url count: (%d), not equals to Certificate Passphrase count: (%d)", len(certificateURLs), len(certificatePassphrases))
 			os.Exit(1)
 		}
 
