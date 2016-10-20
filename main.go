@@ -15,9 +15,18 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bitrise-io/go-utils/cmdex"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+)
+
+const (
+	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
+
+	developerCertificateStartLine = "<key>DeveloperCertificates</key>"
+	developerCertificateEndLine   = "</array>"
+
+	provisionedDevicesStartLine = "<key>ProvisionedDevices</key>"
+	provisionedDevicesEndLine   = "</array>"
 )
 
 // -----------------------
@@ -333,21 +342,44 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func readProfileInfos(profilePth string) (string, error) {
-	profileContent, err := cmdex.NewCommand("security", "cms", "-D", "-i", profilePth).RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("Failed to print profile infos, out: %s, error: %s", profileContent, err)
-	}
-
+func readProfileInfos(profileContent string) (string, error) {
 	lines := []string{}
+	isDeveloperCertificatesSection := false
+	isProvisionedDevicesSection := false
+
 	scanner := bufio.NewScanner(strings.NewReader(profileContent))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(strings.TrimSpace(line), "<data>") {
-			lines = append(lines, "REDACTED")
-		} else {
+
+		if strings.Contains(line, developerCertificateStartLine) {
+			isDeveloperCertificatesSection = true
 			lines = append(lines, line)
+			continue
 		}
+		if isDeveloperCertificatesSection {
+			if strings.Contains(line, developerCertificateEndLine) {
+				isDeveloperCertificatesSection = false
+				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+			}
+
+			continue
+		}
+
+		if strings.Contains(line, provisionedDevicesStartLine) {
+			isProvisionedDevicesSection = true
+			lines = append(lines, line)
+			continue
+		}
+		if isProvisionedDevicesSection {
+			if strings.Contains(line, provisionedDevicesEndLine) {
+				isProvisionedDevicesSection = false
+				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+			}
+
+			continue
+		}
+
+		lines = append(lines, line)
 	}
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
@@ -604,10 +636,28 @@ func main() {
 			os.Exit(1)
 		}
 
-		tmpProvProfilePth := path.Join(tempDir, "prov")
-		writeBytesToFileWithPermission(tmpProvProfilePth, []byte(out), 0)
+		if strings.Contains(out, notValidParameterErrorMessage) {
+			scanner := bufio.NewScanner(strings.NewReader(out))
+			isFirstLine := true
+			fixedLines := []string{}
+			for scanner.Scan() {
+				line := scanner.Text()
+				if isFirstLine {
+					isFirstLine = false
+					continue
+				}
+				fixedLines = append(fixedLines, line)
+			}
+			out = strings.Join(fixedLines, "\n")
+		}
 
-		profile, err := readProfileInfos(tmpPath)
+		tmpProvProfilePth := path.Join(tempDir, "prov")
+		if err := writeBytesToFileWithPermission(tmpProvProfilePth, []byte(out), 0); err != nil {
+			log.Error("Failed to write profile to file, error: %s", err)
+			os.Exit(1)
+		}
+
+		profile, err := readProfileInfos(out)
 		if err != nil {
 			log.Error("Failed to read profile infos, err: %s", err)
 			os.Exit(1)
