@@ -474,13 +474,29 @@ func main() {
 		log.Error("Failed to check path (%s), err: %s", configs.KeychainPath, err)
 		os.Exit(1)
 	} else if !exist {
-		log.Info("Creating keychain: %s", configs.KeychainPath)
+		fmt.Println()
+		log.Warn("Keychain (%s) not exist", configs.KeychainPath)
 
-		if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath); err != nil {
-			log.Error("Failed to create keychain, output: %s", out)
-			log.Error("Failed to create keychain, err: %s", err)
+		keychainPth := fmt.Sprintf("%s-db", configs.KeychainPath)
+
+		log.Detail(" Checking (%s)", keychainPth)
+
+		if exist, err := pathutil.IsPathExists(keychainPth); err != nil {
+			log.Error("Failed to check path (%s), err: %s", keychainPth, err)
 			os.Exit(1)
+		} else if !exist {
+			log.Info("Creating keychain: %s", configs.KeychainPath)
+
+			if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath); err != nil {
+				log.Error("Failed to create keychain, output: %s", out)
+				log.Error("Failed to create keychain, err: %s", err)
+				os.Exit(1)
+			}
+		} else {
+			log.Warn("Keychain (%s) exist, using it...", keychainPth)
+			configs.KeychainPath = keychainPth
 		}
+
 	} else {
 		log.Detail("Keychain already exists, using it: %s", configs.KeychainPath)
 	}
