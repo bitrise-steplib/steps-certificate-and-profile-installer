@@ -22,11 +22,11 @@ import (
 const (
 	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
 
-	developerCertificateStartLine = "<key>DeveloperCertificates</key>"
-	developerCertificateEndLine   = "</array>"
+	developerCertificatesStartLine    = "<key>DeveloperCertificates</key>"
+	developerCertificatesArrayEndLine = "</array>"
 
-	provisionedDevicesStartLine = "<key>ProvisionedDevices</key>"
-	provisionedDevicesEndLine   = "</array>"
+	provisionedDevicesStartLine    = "<key>ProvisionedDevices</key>"
+	provisionedDevicesArrayEndLine = "</array>"
 )
 
 // -----------------------
@@ -351,13 +351,13 @@ func readProfileInfos(profileContent string) (string, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.Contains(line, developerCertificateStartLine) {
+		if strings.Contains(line, developerCertificatesStartLine) {
 			isDeveloperCertificatesSection = true
 			lines = append(lines, line)
 			continue
 		}
 		if isDeveloperCertificatesSection {
-			if strings.Contains(line, developerCertificateEndLine) {
+			if strings.Contains(line, developerCertificatesArrayEndLine) {
 				isDeveloperCertificatesSection = false
 				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
 			}
@@ -371,7 +371,7 @@ func readProfileInfos(profileContent string) (string, error) {
 			continue
 		}
 		if isProvisionedDevicesSection {
-			if strings.Contains(line, provisionedDevicesEndLine) {
+			if strings.Contains(line, provisionedDevicesArrayEndLine) {
 				isProvisionedDevicesSection = false
 				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
 			}
@@ -637,34 +637,27 @@ func main() {
 			provisioningProfileExt = "mobileprovision"
 		}
 
-		tmpPath := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
-		if err := downloadFile(tmpPath, profileURL); err != nil {
+		profileTmpPth := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
+		if err := downloadFile(profileTmpPth, profileURL); err != nil {
 			log.Error("Download failed, err: %s", err)
 			os.Exit(1)
 		}
 
 		fmt.Println()
 		fmt.Println("=> Installing provisioning profile")
-		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", tmpPath)
+		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", profileTmpPth)
 		if err != nil {
 			log.Error("Command failed, output: %s", out)
 			log.Error("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 
-		if strings.Contains(out, notValidParameterErrorMessage) {
-			scanner := bufio.NewScanner(strings.NewReader(out))
-			isFirstLine := true
-			fixedLines := []string{}
-			for scanner.Scan() {
-				line := scanner.Text()
-				if isFirstLine {
-					isFirstLine = false
-					continue
-				}
-				fixedLines = append(fixedLines, line)
+		outSplit := strings.Split(out, "\n")
+		if len(outSplit) > 0 {
+			if strings.Contains(outSplit[0], notValidParameterErrorMessage) {
+				fixedOutSplit := outSplit[1:len(outSplit)]
+				out = strings.Join(fixedOutSplit, "\n")
 			}
-			out = strings.Join(fixedLines, "\n")
 		}
 
 		tmpProvProfilePth := path.Join(tempDir, "prov")
@@ -696,7 +689,7 @@ func main() {
 
 		log.Detail("   Moving it to: %s", profileFinalPth)
 
-		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpPath, profileFinalPth); err != nil {
+		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", profileTmpPth, profileFinalPth); err != nil {
 			log.Error("Command failed, output: %s", out)
 			log.Error("Command failed, err: %s", err)
 			os.Exit(1)
