@@ -7,24 +7,36 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/bitrise-io/go-utils/cmdex",
-			"Rev": "5422c5893198ce5ca5d872179ebacaafa2013bc6"
-		},
-		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
-			"Rev": "5422c5893198ce5ca5d872179ebacaafa2013bc6"
-		},
-		{
-			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "5422c5893198ce5ca5d872179ebacaafa2013bc6"
+			"Rev": "5c210e4691a5a75e5685d2e842a104ca55ec7697"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/log",
-			"Rev": "5422c5893198ce5ca5d872179ebacaafa2013bc6"
+			"Rev": "5c210e4691a5a75e5685d2e842a104ca55ec7697"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "5422c5893198ce5ca5d872179ebacaafa2013bc6"
+			"Rev": "5c210e4691a5a75e5685d2e842a104ca55ec7697"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.0.0-3-g6d21280",
+			"Rev": "6d212800a42e8ab5c146b8ace3490ee17e5225f9"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-4-g976c720",
+			"Rev": "976c720a22c8eb4eb6a0b4348ad85ad12491a506"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/require",
+			"Comment": "v1.1.4-4-g976c720",
+			"Rev": "976c720a22c8eb4eb6a0b4348ad85ad12491a506"
 		}
 	]
 }

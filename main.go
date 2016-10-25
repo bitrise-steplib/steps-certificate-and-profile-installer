@@ -15,9 +15,18 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bitrise-io/go-utils/cmdex"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+)
+
+const (
+	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
+
+	developerCertificatesStartLine    = "<key>DeveloperCertificates</key>"
+	developerCertificatesArrayEndLine = "</array>"
+
+	provisionedDevicesStartLine    = "<key>ProvisionedDevices</key>"
+	provisionedDevicesArrayEndLine = "</array>"
 )
 
 // -----------------------
@@ -114,7 +123,11 @@ func downloadFile(destionationPath, URL string) error {
 		if err != nil {
 			return err
 		}
-		defer tmpDstFile.Close()
+		defer func() {
+			if err := tmpDstFile.Close(); err != nil {
+				log.Error("Failed to close file (%s), error: %s", tmpDst, err)
+			}
+		}()
 
 		success := false
 		var response *http.Response
@@ -132,7 +145,11 @@ func downloadFile(destionationPath, URL string) error {
 			}
 
 			if response != nil {
-				defer response.Body.Close()
+				defer func() {
+					if err := response.Body.Close(); err != nil {
+						log.Error("Failed to close response body, error: %s", err)
+					}
+				}()
 			}
 		}
 		if !success {
@@ -333,21 +350,44 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func readProfileInfos(profilePth string) (string, error) {
-	profileContent, err := cmdex.NewCommand("security", "cms", "-D", "-i", profilePth).RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("Failed to print profile infos, out: %s, error: %s", profileContent, err)
-	}
-
+func printableProfileInfos(profileContent string) (string, error) {
 	lines := []string{}
+	isDeveloperCertificatesSection := false
+	isProvisionedDevicesSection := false
+
 	scanner := bufio.NewScanner(strings.NewReader(profileContent))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(strings.TrimSpace(line), "<data>") {
-			lines = append(lines, "REDACTED")
-		} else {
+
+		if strings.Contains(line, developerCertificatesStartLine) {
+			isDeveloperCertificatesSection = true
 			lines = append(lines, line)
+			continue
 		}
+		if isDeveloperCertificatesSection {
+			if strings.Contains(line, developerCertificatesArrayEndLine) {
+				isDeveloperCertificatesSection = false
+				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+			}
+
+			continue
+		}
+
+		if strings.Contains(line, provisionedDevicesStartLine) {
+			isProvisionedDevicesSection = true
+			lines = append(lines, line)
+			continue
+		}
+		if isProvisionedDevicesSection {
+			if strings.Contains(line, provisionedDevicesArrayEndLine) {
+				isProvisionedDevicesSection = false
+				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+			}
+
+			continue
+		}
+
+		lines = append(lines, line)
 	}
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
@@ -442,13 +482,29 @@ func main() {
 		log.Error("Failed to check path (%s), err: %s", configs.KeychainPath, err)
 		os.Exit(1)
 	} else if !exist {
-		log.Info("Creating keychain: %s", configs.KeychainPath)
+		fmt.Println()
+		log.Warn("Keychain (%s) does not exist", configs.KeychainPath)
 
-		if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath); err != nil {
-			log.Error("Failed to create keychain, output: %s", out)
-			log.Error("Failed to create keychain, err: %s", err)
+		keychainPth := fmt.Sprintf("%s-db", configs.KeychainPath)
+
+		log.Detail(" Checking (%s)", keychainPth)
+
+		if exist, err := pathutil.IsPathExists(keychainPth); err != nil {
+			log.Error("Failed to check path (%s), err: %s", keychainPth, err)
 			os.Exit(1)
+		} else if !exist {
+			log.Info("Creating keychain: %s", configs.KeychainPath)
+
+			if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath); err != nil {
+				log.Error("Failed to create keychain, output: %s", out)
+				log.Error("Failed to create keychain, err: %s", err)
+				os.Exit(1)
+			}
+		} else {
+			log.Warn("Keychain (%s) exist, using it...", keychainPth)
+			configs.KeychainPath = keychainPth
 		}
+
 	} else {
 		log.Detail("Keychain already exists, using it: %s", configs.KeychainPath)
 	}
@@ -589,25 +645,36 @@ func main() {
 			provisioningProfileExt = "mobileprovision"
 		}
 
-		tmpPath := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
-		if err := downloadFile(tmpPath, profileURL); err != nil {
+		profileTmpPth := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
+		if err := downloadFile(profileTmpPth, profileURL); err != nil {
 			log.Error("Download failed, err: %s", err)
 			os.Exit(1)
 		}
 
 		fmt.Println()
 		fmt.Println("=> Installing provisioning profile")
-		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", tmpPath)
+		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", profileTmpPth)
 		if err != nil {
 			log.Error("Command failed, output: %s", out)
 			log.Error("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 
-		tmpProvProfilePth := path.Join(tempDir, "prov")
-		writeBytesToFileWithPermission(tmpProvProfilePth, []byte(out), 0)
+		outSplit := strings.Split(out, "\n")
+		if len(outSplit) > 0 {
+			if strings.Contains(outSplit[0], notValidParameterErrorMessage) {
+				fixedOutSplit := outSplit[1:len(outSplit)]
+				out = strings.Join(fixedOutSplit, "\n")
+			}
+		}
 
-		profile, err := readProfileInfos(tmpPath)
+		tmpProvProfilePth := path.Join(tempDir, "prov")
+		if err := writeBytesToFileWithPermission(tmpProvProfilePth, []byte(out), 0); err != nil {
+			log.Error("Failed to write profile to file, error: %s", err)
+			os.Exit(1)
+		}
+
+		profileInfos, err := printableProfileInfos(out)
 		if err != nil {
 			log.Error("Failed to read profile infos, err: %s", err)
 			os.Exit(1)
@@ -615,7 +682,7 @@ func main() {
 
 		fmt.Println()
 		log.Info("Profile Infos:")
-		log.Detail("%s", profile)
+		log.Detail("%s", profileInfos)
 		fmt.Println()
 
 		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)
@@ -630,7 +697,7 @@ func main() {
 
 		log.Detail("   Moving it to: %s", profileFinalPth)
 
-		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpPath, profileFinalPth); err != nil {
+		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", profileTmpPth, profileFinalPth); err != nil {
 			log.Error("Command failed, output: %s", out)
 			log.Error("Command failed, err: %s", err)
 			os.Exit(1)
