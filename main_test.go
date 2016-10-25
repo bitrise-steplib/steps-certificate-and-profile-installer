@@ -353,54 +353,6 @@ func TestSecureInput(t *testing.T) {
 	}
 }
 
-/*
-func readProfileInfos(profileContent string) (string, error) {
-	lines := []string{}
-	isDeveloperCertificatesSection := false
-	isProvisionedDevicesSection := false
-
-	scanner := bufio.NewScanner(strings.NewReader(profileContent))
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.Contains(line, developerCertificatesStartLine) {
-			isDeveloperCertificatesSection = true
-			lines = append(lines, line)
-			continue
-		}
-		if isDeveloperCertificatesSection {
-			if strings.Contains(line, developerCertificatesArrayEndLine) {
-				isDeveloperCertificatesSection = false
-				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
-			}
-
-			continue
-		}
-
-		if strings.Contains(line, provisionedDevicesStartLine) {
-			isProvisionedDevicesSection = true
-			lines = append(lines, line)
-			continue
-		}
-		if isProvisionedDevicesSection {
-			if strings.Contains(line, provisionedDevicesArrayEndLine) {
-				isProvisionedDevicesSection = false
-				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
-			}
-
-			continue
-		}
-
-		lines = append(lines, line)
-	}
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
-	}
-
-	return strings.Join(lines, "\n"), nil
-}
-*/
-
 func TestPrintableProfileInfos(t *testing.T) {
 	t.Log()
 	{
