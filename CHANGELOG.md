@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.7.0)
+## Changelog (Current version: 1.8.0)
 
 -----------------
+
+### 1.8.0 (2016 Oct 25)
+
+* [694e2f0] prepare for 1.8.0
+* [bb10316] security command Sierra fix, redact provisioned devices as well (#21)
 
 ### 1.7.0 (2016 Sep 15)
 
@@ -125,4 +130,4 @@
 
 -----------------
 
-Updated: 2016 Sep 15
+Updated: 2016 Oct 25
