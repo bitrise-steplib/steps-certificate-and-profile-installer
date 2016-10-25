@@ -123,7 +123,11 @@ func downloadFile(destionationPath, URL string) error {
 		if err != nil {
 			return err
 		}
-		defer tmpDstFile.Close()
+		defer func() {
+			if err := tmpDstFile.Close(); err != nil {
+				log.Error("Failed to close file (%s), error: %s", tmpDst, err)
+			}
+		}()
 
 		success := false
 		var response *http.Response
@@ -141,7 +145,11 @@ func downloadFile(destionationPath, URL string) error {
 			}
 
 			if response != nil {
-				defer response.Body.Close()
+				defer func() {
+					if err := response.Body.Close(); err != nil {
+						log.Error("Failed to close response body, error: %s", err)
+					}
+				}()
 			}
 		}
 		if !success {
@@ -342,7 +350,7 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func readProfileInfos(profileContent string) (string, error) {
+func printableProfileInfos(profileContent string) (string, error) {
 	lines := []string{}
 	isDeveloperCertificatesSection := false
 	isProvisionedDevicesSection := false
@@ -475,7 +483,7 @@ func main() {
 		os.Exit(1)
 	} else if !exist {
 		fmt.Println()
-		log.Warn("Keychain (%s) not exist", configs.KeychainPath)
+		log.Warn("Keychain (%s) does not exist", configs.KeychainPath)
 
 		keychainPth := fmt.Sprintf("%s-db", configs.KeychainPath)
 
@@ -666,7 +674,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		profile, err := readProfileInfos(out)
+		profileInfos, err := printableProfileInfos(out)
 		if err != nil {
 			log.Error("Failed to read profile infos, err: %s", err)
 			os.Exit(1)
@@ -674,7 +682,7 @@ func main() {
 
 		fmt.Println()
 		log.Info("Profile Infos:")
-		log.Detail("%s", profile)
+		log.Detail("%s", profileInfos)
 		fmt.Println()
 
 		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)

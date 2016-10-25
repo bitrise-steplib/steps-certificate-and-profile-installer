@@ -3,7 +3,65 @@ package main
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+const profileContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppIDName</key>
+	<string>bitrise wild card</string>
+	<key>ApplicationIdentifierPrefix</key>
+	<array>
+	<string>12344DLTN7</string>
+	</array>
+	<key>CreationDate</key>
+	<date>2016-09-21T13:34:31Z</date>
+	<key>Platform</key>
+	<array>
+		<string>iOS</string>
+	</array>
+	<key>DeveloperCertificates</key>
+	<array>
+		<data>1235678QYJKoZIhvcNAQEFBQAwgZYxCzAJBgNVBAYTAlVTMRMwEQYDVQQKDApBcHBsZSBJbmMuMSwwKgYDVQQLDCNBcHBsZSBXb3JsZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9uczFEMEIGA1UEAww7QXBwbGUgV29ybGR3aWRlIERldmVsb3BlciBSZWxhdGlvbnMgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTYwOTIxMTMyMDA2WhcNMTcwOTIxMTMyMDA2WjCBiDEaMBgGCgmSJomT8ixkAQEMCjlOUzQ0RExUTjcxNDAyBgNVBAMMK2lQaG9uZSBEaXN0cmlidXRpb246IFNvbWUgRHVkZSAoOU5TNDRETFRONykxEzARBgNVBAsMCjlOUzQ0RExUTjcxEjAQBgNVBAoMCVNvbWUgRHVkZTELMAkGA1UEBhMCVVMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCjg61WV4/gyWzmc5ZsM2GJsGWsCv/Eo15WvhtDWi0fLYV+NwRvqTodDan6+UIyvY9b1/yGxEXbXhqlzo1SwaL49ZslBDN/E8Nzu7//EJMBrHv3XYLUFKAs9AQw3pXg3QMlL5QP6MzPHwN/WK+CBWdBrIpCcAOwmPcdM1oHlHm0NVk6QhzyGMXpjFUdDEIwFy6p7RSJ+FPmD68ENNnbrMjq1Abbj2kkC9K8CFnP8jKNs1Csv66NyUfKwEohSYMojkPuuCI7ENtIzRwfnQABYAmwIeblO+7IEhj5ZubCTbIO2PYjlpDSL49kxbrw38Ck9403kxmFSpyg4wVPfaiYRSgtAgMBAAGjggHxMIIB7TAdBgNVHQ4EFgQUcW2flxz+ERv6viUu2FFRzvqDBN8wDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBSIJxcJqbYYYIvs67r2R1nFUlSjtzCCAQ8GA1UdIASCAQYwggECMIH/BgkqhkiG92NkBQEwgfEwgcMGCCsGAQUFBwICMIG2DIGzUmVsaWFuY2Ugb24gdGhpcyBjZXJ0aWZpY2F0ZSBieSBhbnkgcGFydHkgYXNzdW1lcyBhY2NlcHRhbmNlIG9mIHRoZSB0aGVuIGFwcGxpY2FibGUgc3RhbmRhcmQgdGVybXMgYW5kIGNvbmRpdGlvbnMgb2YgdXNlLCBjZXJ0aWZpY2F0ZSBwb2xpY3kgYW5kIGNlcnRpZmljYXRpb24gcHJhY3RpY2Ugc3RhdGVtZW50cy4wKQYIKwYBBQUHAgEWHWh0dHA6Ly93d3cuYXBwbGUuY29tL2FwcGxlY2EvME0GA1UdHwRGMEQwQqBAoD6GPGh0dHA6Ly9kZXZlbG9wZXIuYXBwbGUuY29tL2NlcnRpZmljYXRpb25hdXRob3JpdHkvd3dkcmNhLmNybDAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwMwEwYKKoZIhvdjZAYBBAEB/wQCBQAwDQYJKoZIhvcNAQEFBQADggEBAADrYN6yP/sDRGx3IFrVT4WDnvIu9cA9adZye6KlfzlECUaCs4Twx+d2LxJlgj0FEd+3fj+ri0uVgx8rB1J7lYR6Nc4ntY4yQUvIkZ7azp4bUfRMVvmH7GSnS5eIQSIreoBnBpbYOFiBdeop9u1Uh5BOP79o0dUfRFMxsWtKl+tlaJP8EwTteeXLUWfJu96OkcZeAYrZvzZ1iVPoXkntaXyTNuB6Uq7sW0UIbt89ti2/Bm7InZCMMp9bi/051AKKeGtDvD2ViDo9I9l9M3f8a7Qu/Hd8Z0YiZxSQYgWpkVSz6mNS/ZW44FAe+ga98HtNnA4PwYKBNotWVrFPGq95azo=</data>
+	</array>
+	<key>Entitlements</key>
+	<dict>
+		<key>keychain-access-groups</key>
+		<array>
+			<string>12344DLTN7.*</string>
+		</array>
+		<key>get-task-allow</key>
+		<false/>
+		<key>application-identifier</key>
+		<string>12344DLTN7.com.bitrise.*</string>
+		<key>com.apple.developer.team-identifier</key>
+		<string>12344DLTN7</string>
+	</dict>
+	<key>ExpirationDate</key>
+	<date>2017-09-21T13:20:06Z</date>
+	<key>Name</key>
+	<string>iOS Distribution bitrise wild card</string>
+	<key>ProvisionedDevices</key>
+	<array>
+		<string>12343075ad9b298cb9a9f28555c49573d8bc322</string>
+	</array>
+	<key>TeamIdentifier</key>
+	<array>
+		<string>12344DLTN7</string>
+	</array>
+	<key>TeamName</key>
+	<string>Bitrise</string>
+	<key>TimeToLive</key>
+	<integer>364</integer>
+	<key>UUID</key>
+	<string>12345-57d7-4183-85f8-9dc5710447dd</string>
+	<key>Version</key>
+	<integer>1</integer>
+</dict>
+</plist>`
 
 const friendlyName = "iPhone Distribution: XYZ (xyz) (XYZ)"
 
@@ -292,5 +350,112 @@ func TestSecureInput(t *testing.T) {
 		if got != expected {
 			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
 		}
+	}
+}
+
+/*
+func readProfileInfos(profileContent string) (string, error) {
+	lines := []string{}
+	isDeveloperCertificatesSection := false
+	isProvisionedDevicesSection := false
+
+	scanner := bufio.NewScanner(strings.NewReader(profileContent))
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.Contains(line, developerCertificatesStartLine) {
+			isDeveloperCertificatesSection = true
+			lines = append(lines, line)
+			continue
+		}
+		if isDeveloperCertificatesSection {
+			if strings.Contains(line, developerCertificatesArrayEndLine) {
+				isDeveloperCertificatesSection = false
+				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+			}
+
+			continue
+		}
+
+		if strings.Contains(line, provisionedDevicesStartLine) {
+			isProvisionedDevicesSection = true
+			lines = append(lines, line)
+			continue
+		}
+		if isProvisionedDevicesSection {
+			if strings.Contains(line, provisionedDevicesArrayEndLine) {
+				isProvisionedDevicesSection = false
+				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+			}
+
+			continue
+		}
+
+		lines = append(lines, line)
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
+	}
+
+	return strings.Join(lines, "\n"), nil
+}
+*/
+
+func TestPrintableProfileInfos(t *testing.T) {
+	t.Log()
+	{
+		profileInfos, err := printableProfileInfos(profileContent)
+		require.NoError(t, err)
+		require.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppIDName</key>
+	<string>bitrise wild card</string>
+	<key>ApplicationIdentifierPrefix</key>
+	<array>
+	<string>12344DLTN7</string>
+	</array>
+	<key>CreationDate</key>
+	<date>2016-09-21T13:34:31Z</date>
+	<key>Platform</key>
+	<array>
+		<string>iOS</string>
+	</array>
+	<key>DeveloperCertificates</key>
+                [REDACTED]
+	<key>Entitlements</key>
+	<dict>
+		<key>keychain-access-groups</key>
+		<array>
+			<string>12344DLTN7.*</string>
+		</array>
+		<key>get-task-allow</key>
+		<false/>
+		<key>application-identifier</key>
+		<string>12344DLTN7.com.bitrise.*</string>
+		<key>com.apple.developer.team-identifier</key>
+		<string>12344DLTN7</string>
+	</dict>
+	<key>ExpirationDate</key>
+	<date>2017-09-21T13:20:06Z</date>
+	<key>Name</key>
+	<string>iOS Distribution bitrise wild card</string>
+	<key>ProvisionedDevices</key>
+                [REDACTED]
+	<key>TeamIdentifier</key>
+	<array>
+		<string>12344DLTN7</string>
+	</array>
+	<key>TeamName</key>
+	<string>Bitrise</string>
+	<key>TimeToLive</key>
+	<integer>364</integer>
+	<key>UUID</key>
+	<string>12345-57d7-4183-85f8-9dc5710447dd</string>
+	<key>Version</key>
+	<integer>1</integer>
+</dict>
+</plist>`, profileInfos)
 	}
 }
