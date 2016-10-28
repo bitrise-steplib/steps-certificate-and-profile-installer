@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/bitrise-io/go-utils/cmdex"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 )
@@ -501,8 +502,8 @@ func main() {
 				os.Exit(1)
 			}
 		} else {
-			log.Warn("Keychain (%s) exist, using it...", keychainPth)
-			configs.KeychainPath = keychainPth
+			// log.Warn("Keychain (%s) exist, using it...", keychainPth)
+			// configs.KeychainPath = keychainPth
 		}
 
 	} else {
@@ -545,6 +546,16 @@ func main() {
 		}
 	}
 
+	// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
+	// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
+	args := []string{"security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath}
+	cmd := cmdex.NewCommand(args[0], args[1:]...)
+	log.Warn("$ %s", cmdex.PrintableCommandArgs(false, args))
+	if err := cmd.Run(); err != nil {
+		log.Error("Failed, err: %s", err)
+	}
+	// ---
+
 	// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
 	settingsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "set-keychain-settings", "-lut", "72000", configs.KeychainPath)
 	if err != nil {
@@ -572,7 +583,7 @@ func main() {
 	strippedKeychainList = addKeyChainToList(strippedKeychainList, configs.KeychainPath)
 
 	// Set keychain search path
-	args := []string{"-v", "list-keychains", "-s"}
+	args = []string{"-v", "list-keychains", "-s"}
 	args = append(args, strippedKeychainList...)
 
 	listKeychainsOut, err = runCommandAndReturnCombinedStdoutAndStderr("security", args...)

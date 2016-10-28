@@ -7,7 +7,15 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/bitrise-io/go-utils/cmdex",
+			"Rev": "5c210e4691a5a75e5685d2e842a104ca55ec7697"
+		},
+		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
+			"Rev": "5c210e4691a5a75e5685d2e842a104ca55ec7697"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
 			"Rev": "5c210e4691a5a75e5685d2e842a104ca55ec7697"
 		},
 		{
