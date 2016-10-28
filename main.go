@@ -569,6 +569,7 @@ func main() {
 		cmd := cmdex.NewCommand("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
 		if err := cmd.Run(); err != nil {
 			log.Error("Failed, err: %s", err)
+			os.Exit(1)
 		}
 	}
 	// ---
