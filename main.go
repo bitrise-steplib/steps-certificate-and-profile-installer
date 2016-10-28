@@ -501,11 +501,7 @@ func main() {
 				log.Error("Failed to create keychain, err: %s", err)
 				os.Exit(1)
 			}
-		} else {
-			// log.Warn("Keychain (%s) exist, using it...", keychainPth)
-			// configs.KeychainPath = keychainPth
 		}
-
 	} else {
 		log.Detail("Keychain already exists, using it: %s", configs.KeychainPath)
 	}
