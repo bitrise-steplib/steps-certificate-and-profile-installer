@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.0)
+## Changelog (Current version: 1.8.1)
 
 -----------------
+
+### 1.8.1 (2016 Oct 28)
+
+* [b2d36e2] prepare for 1.8.1
+* [c0f279f] sierra keychain prompt fix (#22)
 
 ### 1.8.0 (2016 Oct 25)
 
@@ -130,4 +135,4 @@
 
 -----------------
 
-Updated: 2016 Oct 25
+Updated: 2016 Oct 28
