@@ -15,8 +15,10 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/bitrise-io/go-utils/cmdex"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/hashicorp/go-version"
 )
 
 const (
@@ -500,11 +502,7 @@ func main() {
 				log.Error("Failed to create keychain, err: %s", err)
 				os.Exit(1)
 			}
-		} else {
-			log.Warn("Keychain (%s) exist, using it...", keychainPth)
-			configs.KeychainPath = keychainPth
 		}
-
 	} else {
 		log.Detail("Keychain already exists, using it: %s", configs.KeychainPath)
 	}
@@ -544,6 +542,37 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
+	// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
+	osVersionCmd := cmdex.NewCommand("sw_vers", "-productVersion")
+	out, err := osVersionCmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		log.Error("Failed to get os version, error: %s", err)
+		os.Exit(1)
+	}
+
+	osVersion, err := version.NewVersion(out)
+	if err != nil {
+		log.Error("Failed to parse os version (%s), error: %s", out, err)
+		os.Exit(1)
+	}
+
+	sierraVersionStr := "10.12.0"
+	sierraVersion, err := version.NewVersion(sierraVersionStr)
+	if err != nil {
+		log.Error("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
+		os.Exit(1)
+	}
+
+	if !osVersion.LessThan(sierraVersion) {
+		cmd := cmdex.NewCommand("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed, err: %s", err)
+			os.Exit(1)
+		}
+	}
+	// ---
 
 	// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
 	settingsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "set-keychain-settings", "-lut", "72000", configs.KeychainPath)
