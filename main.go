@@ -18,6 +18,7 @@ import (
 	"github.com/bitrise-io/go-utils/cmdex"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/hashicorp/go-version"
 )
 
 const (
@@ -544,11 +545,31 @@ func main() {
 
 	// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
 	// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
-	args := []string{"security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath}
-	cmd := cmdex.NewCommand(args[0], args[1:]...)
-	log.Warn("$ %s", cmdex.PrintableCommandArgs(false, args))
-	if err := cmd.Run(); err != nil {
-		log.Error("Failed, err: %s", err)
+	osVersionCmd := cmdex.NewCommand("sw_vers", "-productVersion")
+	out, err := osVersionCmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		log.Error("Failed to get os version, error: %s", err)
+		os.Exit(1)
+	}
+
+	osVersion, err := version.NewVersion(out)
+	if err != nil {
+		log.Error("Failed to parse os version (%s), error: %s", out, err)
+		os.Exit(1)
+	}
+
+	sierraVersionStr := "10.12.0"
+	sierraVersion, err := version.NewVersion(sierraVersionStr)
+	if err != nil {
+		log.Error("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
+		os.Exit(1)
+	}
+
+	if !osVersion.LessThan(sierraVersion) {
+		cmd := cmdex.NewCommand("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
+		if err := cmd.Run(); err != nil {
+			log.Error("Failed, err: %s", err)
+		}
 	}
 	// ---
 
@@ -579,7 +600,7 @@ func main() {
 	strippedKeychainList = addKeyChainToList(strippedKeychainList, configs.KeychainPath)
 
 	// Set keychain search path
-	args = []string{"-v", "list-keychains", "-s"}
+	args := []string{"-v", "list-keychains", "-s"}
 	args = append(args, strippedKeychainList...)
 
 	listKeychainsOut, err = runCommandAndReturnCombinedStdoutAndStderr("security", args...)
