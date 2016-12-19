@@ -81,11 +81,11 @@ func (configs ConfigsModel) print() {
 
 func (configs ConfigsModel) validate() error {
 	if configs.KeychainPath == "" {
-		return errors.New("No KeychainPath parameter specified!")
+		return errors.New("no KeychainPath parameter specified")
 	}
 
 	if configs.KeychainPassword == "" {
-		return errors.New("No KeychainPassword parameter specified!")
+		return errors.New("no KeychainPassword parameter specified")
 	}
 
 	return nil
