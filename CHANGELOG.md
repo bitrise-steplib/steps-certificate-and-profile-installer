@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.1)
+## Changelog (Current version: 1.8.2)
 
 -----------------
+
+### 1.8.2 (2016 Dec 20)
+
+* [2705ec8] prepare for 1.8.2
+* [a47069a] Project type tag (#25)
 
 ### 1.8.1 (2016 Oct 28)
 
@@ -135,4 +140,4 @@
 
 -----------------
 
-Updated: 2016 Oct 28
+Updated: 2016 Dec 20
