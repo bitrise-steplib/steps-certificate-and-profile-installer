@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bitrise-io/go-utils/cmdex"
+	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/hashicorp/go-version"
@@ -567,8 +568,12 @@ func main() {
 
 	if !osVersion.LessThan(sierraVersion) {
 		cmd := cmdex.NewCommand("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
-		if err := cmd.Run(); err != nil {
-			log.Error("Failed, err: %s", err)
+		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+			fmt.Println()
+			log.Error("Failed to setup keychain, err: %s", err)
+			if errorutil.IsExitStatusError(err) {
+				log.Detail(out)
+			}
 			os.Exit(1)
 		}
 	}
