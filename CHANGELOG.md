@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.2)
+## Changelog (Current version: 1.8.3)
 
 -----------------
+
+### 1.8.3 (2017 Mar 03)
+
+* [f58688f] Prepare for 1.8.3
+* [b08a0e1] Keychain error print (#26)
 
 ### 1.8.2 (2016 Dec 20)
 
@@ -140,4 +145,4 @@
 
 -----------------
 
-Updated: 2016 Dec 20
+Updated: 2017 Mar 03
