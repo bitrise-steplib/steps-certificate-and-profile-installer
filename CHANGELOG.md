@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.8.3)
+## Changelog (Current version: 1.8.4)
 
 -----------------
+
+### 1.8.4 (2017 Mar 10)
+
+* [ff48ad7] prepare for 1.8.4
+* [75e9c12] test for developer id cert install (#28)
+* [79e6f41] godeps update (#27)
 
 ### 1.8.3 (2017 Mar 03)
 
@@ -145,4 +151,4 @@
 
 -----------------
 
-Updated: 2017 Mar 03
+Updated: 2017 Mar 10
