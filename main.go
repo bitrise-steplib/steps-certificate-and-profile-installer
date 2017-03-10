@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bitrise-io/go-utils/cmdex"
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -67,17 +67,17 @@ func createConfigsModelFromEnvs() ConfigsModel {
 
 func (configs ConfigsModel) print() {
 	fmt.Println()
-	log.Info("Configs:")
-	log.Detail(" - CertificateURL: %s", secureInput(configs.CertificateURL))
-	log.Detail(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
-	log.Detail(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
+	log.Infof("Configs:")
+	log.Printf(" - CertificateURL: %s", secureInput(configs.CertificateURL))
+	log.Printf(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
+	log.Printf(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
 
-	log.Detail(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
-	log.Detail(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
-	log.Detail(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
+	log.Printf(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
+	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
+	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
 
-	log.Detail(" - KeychainPath: %s", configs.KeychainPath)
-	log.Detail(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
+	log.Printf(" - KeychainPath: %s", configs.KeychainPath)
+	log.Printf(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
 }
 
 func (configs ConfigsModel) validate() error {
@@ -114,7 +114,7 @@ func downloadFile(destionationPath, URL string) error {
 
 	tmpDstFilePath := ""
 	if scheme != "file" {
-		log.Detail("   Downloading (%s) to (%s)", secureInput(URL), destionationPath)
+		log.Printf("   Downloading (%s) to (%s)", secureInput(URL), destionationPath)
 
 		tmpDir, err := pathutil.NormalizedOSTempDirPath("download")
 		if err != nil {
@@ -128,7 +128,7 @@ func downloadFile(destionationPath, URL string) error {
 		}
 		defer func() {
 			if err := tmpDstFile.Close(); err != nil {
-				log.Error("Failed to close file (%s), error: %s", tmpDst, err)
+				log.Errorf("Failed to close file (%s), error: %s", tmpDst, err)
 			}
 		}()
 
@@ -142,7 +142,7 @@ func downloadFile(destionationPath, URL string) error {
 
 			response, err = http.Get(URL)
 			if err != nil {
-				log.Error(err.Error())
+				log.Errorf(err.Error())
 			} else {
 				success = true
 			}
@@ -150,7 +150,7 @@ func downloadFile(destionationPath, URL string) error {
 			if response != nil {
 				defer func() {
 					if err := response.Body.Close(); err != nil {
-						log.Error("Failed to close response body, error: %s", err)
+						log.Errorf("Failed to close response body, error: %s", err)
 					}
 				}()
 			}
@@ -166,12 +166,12 @@ func downloadFile(destionationPath, URL string) error {
 
 		tmpDstFilePath = tmpDstFile.Name()
 	} else {
-		log.Detail("   Moving (%s) to (%s)", secureInput(URL), destionationPath)
+		log.Printf("   Moving (%s) to (%s)", secureInput(URL), destionationPath)
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
 	if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", tmpDstFilePath, destionationPath); err != nil {
-		log.Detail("Move out: %s", out)
+		log.Printf("Move out: %s", out)
 		return err
 	}
 
@@ -205,7 +205,7 @@ func writeBytesToFileWithPermission(pth string, fileCont []byte, perm os.FileMod
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Warn(" [!] Failed to close file:", err)
+			log.Warnf(" [!] Failed to close file:", err)
 		}
 	}()
 
@@ -407,7 +407,7 @@ func main() {
 	configs := createConfigsModelFromEnvs()
 	configs.print()
 	if err := configs.validate(); err != nil {
-		log.Error("Issue with input: %s", err)
+		log.Errorf("Issue with input: %s", err)
 		os.Exit(1)
 	}
 	fmt.Println()
@@ -420,7 +420,7 @@ func main() {
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
-			log.Error("Certificate url count: (%d), not equals to Certificate Passphrase count: (%d)", len(certificateURLs), len(certificatePassphrases))
+			log.Errorf("Certificate url count: (%d), not equals to Certificate Passphrase count: (%d)", len(certificateURLs), len(certificatePassphrases))
 			os.Exit(1)
 		}
 
@@ -433,15 +433,15 @@ func main() {
 	}
 
 	if configs.DefaultCertificateURL != "" {
-		log.Detail("Default Certificate given")
+		log.Printf("Default Certificate given")
 		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
 	}
 
 	certificateCount := len(certificateURLPassphraseMap)
-	log.Detail("Provided Certificate count: %d", certificateCount)
+	log.Printf("Provided Certificate count: %d", certificateCount)
 
 	if certificateCount == 0 {
-		log.Error("No Certificate provided")
+		log.Errorf("No Certificate provided")
 		os.Exit(1)
 	}
 
@@ -449,15 +449,15 @@ func main() {
 	provisioningProfileURLs := strings.Split(configs.ProvisioningProfileURL, "|")
 
 	if configs.DefaultProvisioningProfileURL != "" {
-		log.Detail("Default Provisioning Profile given")
+		log.Printf("Default Provisioning Profile given")
 		provisioningProfileURLs = append(provisioningProfileURLs, configs.DefaultProvisioningProfileURL)
 	}
 
 	profileCount := len(provisioningProfileURLs)
-	log.Detail("Provided Provisioning Profile count: %d", profileCount)
+	log.Printf("Provided Provisioning Profile count: %d", profileCount)
 
 	if profileCount == 0 {
-		log.Error("No Provisioning Profile provided")
+		log.Errorf("No Provisioning Profile provided")
 		os.Exit(1)
 	}
 
@@ -466,62 +466,62 @@ func main() {
 	homeDir := os.Getenv("HOME")
 	provisioningProfileDir := path.Join(homeDir, "Library/MobileDevice/Provisioning Profiles")
 	if exist, err := pathutil.IsPathExists(provisioningProfileDir); err != nil {
-		log.Error("Failed to check path (%s), err: %s", provisioningProfileDir, err)
+		log.Errorf("Failed to check path (%s), err: %s", provisioningProfileDir, err)
 		os.Exit(1)
 	} else if !exist {
 		if err := os.MkdirAll(provisioningProfileDir, 0777); err != nil {
-			log.Error("Failed to create path (%s), err: %s", provisioningProfileDir, err)
+			log.Errorf("Failed to create path (%s), err: %s", provisioningProfileDir, err)
 			os.Exit(1)
 		}
 	}
 
 	tempDir, err := pathutil.NormalizedOSTempDirPath("bitrise-cert-tmp")
 	if err != nil {
-		log.Error("Failed to create tmp directory, err: %s", err)
+		log.Errorf("Failed to create tmp directory, err: %s", err)
 		os.Exit(1)
 	}
 
 	if exist, err := pathutil.IsPathExists(configs.KeychainPath); err != nil {
-		log.Error("Failed to check path (%s), err: %s", configs.KeychainPath, err)
+		log.Errorf("Failed to check path (%s), err: %s", configs.KeychainPath, err)
 		os.Exit(1)
 	} else if !exist {
 		fmt.Println()
-		log.Warn("Keychain (%s) does not exist", configs.KeychainPath)
+		log.Warnf("Keychain (%s) does not exist", configs.KeychainPath)
 
 		keychainPth := fmt.Sprintf("%s-db", configs.KeychainPath)
 
-		log.Detail(" Checking (%s)", keychainPth)
+		log.Printf(" Checking (%s)", keychainPth)
 
 		if exist, err := pathutil.IsPathExists(keychainPth); err != nil {
-			log.Error("Failed to check path (%s), err: %s", keychainPth, err)
+			log.Errorf("Failed to check path (%s), err: %s", keychainPth, err)
 			os.Exit(1)
 		} else if !exist {
-			log.Info("Creating keychain: %s", configs.KeychainPath)
+			log.Infof("Creating keychain: %s", configs.KeychainPath)
 
 			if out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath); err != nil {
-				log.Error("Failed to create keychain, output: %s", out)
-				log.Error("Failed to create keychain, err: %s", err)
+				log.Errorf("Failed to create keychain, output: %s", out)
+				log.Errorf("Failed to create keychain, err: %s", err)
 				os.Exit(1)
 			}
 		}
 	} else {
-		log.Detail("Keychain already exists, using it: %s", configs.KeychainPath)
+		log.Printf("Keychain already exists, using it: %s", configs.KeychainPath)
 	}
 
 	//
 	// Download certificate
 	fmt.Println()
-	log.Info("Downloading & installing Certificate(s)")
+	log.Infof("Downloading & installing Certificate(s)")
 
 	certificatePassphraseMap := map[string]string{}
 	idx := 0
 	for certURL, pass := range certificateURLPassphraseMap {
 		fmt.Println()
-		log.Detail("=> Downloading certificate: %d/%d", idx+1, certificateCount)
+		log.Printf("=> Downloading certificate: %d/%d", idx+1, certificateCount)
 
 		certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
 		if err := downloadFile(certPath, certURL); err != nil {
-			log.Error("Download failed, err: %s", err)
+			log.Errorf("Download failed, err: %s", err)
 			os.Exit(1)
 		}
 		certificatePassphraseMap[certPath] = pass
@@ -532,47 +532,47 @@ func main() {
 	//
 	// Install certificate
 	fmt.Println()
-	log.Detail("=> Installing downloaded certificate")
+	log.Printf("=> Installing downloaded certificate")
 
 	for cert, pass := range certificatePassphraseMap {
 		// Import items into a keychain.
 		importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
 		if err != nil {
-			log.Error("Command failed, output: %s", importOut)
-			log.Error("Command failed, err: %s", err)
+			log.Errorf("Command failed, output: %s", importOut)
+			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 	}
 
 	// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
 	// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
-	osVersionCmd := cmdex.NewCommand("sw_vers", "-productVersion")
+	osVersionCmd := command.New("sw_vers", "-productVersion")
 	out, err := osVersionCmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		log.Error("Failed to get os version, error: %s", err)
+		log.Errorf("Failed to get os version, error: %s", err)
 		os.Exit(1)
 	}
 
 	osVersion, err := version.NewVersion(out)
 	if err != nil {
-		log.Error("Failed to parse os version (%s), error: %s", out, err)
+		log.Errorf("Failed to parse os version (%s), error: %s", out, err)
 		os.Exit(1)
 	}
 
 	sierraVersionStr := "10.12.0"
 	sierraVersion, err := version.NewVersion(sierraVersionStr)
 	if err != nil {
-		log.Error("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
+		log.Errorf("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
 		os.Exit(1)
 	}
 
 	if !osVersion.LessThan(sierraVersion) {
-		cmd := cmdex.NewCommand("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
+		cmd := command.New("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
 		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 			fmt.Println()
-			log.Error("Failed to setup keychain, err: %s", err)
+			log.Errorf("Failed to setup keychain, err: %s", err)
 			if errorutil.IsExitStatusError(err) {
-				log.Detail(out)
+				log.Printf(out)
 			}
 			os.Exit(1)
 		}
@@ -582,16 +582,16 @@ func main() {
 	// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
 	settingsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "set-keychain-settings", "-lut", "72000", configs.KeychainPath)
 	if err != nil {
-		log.Error("Command failed, output: %s", settingsOut)
-		log.Error("Command failed, err: %s", err)
+		log.Errorf("Command failed, output: %s", settingsOut)
+		log.Errorf("Command failed, err: %s", err)
 		os.Exit(1)
 	}
 
 	// List keychains
 	listKeychainsOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "list-keychains")
 	if err != nil {
-		log.Error("Command failed, output: %s", listKeychainsOut)
-		log.Error("Command failed, err: %s", err)
+		log.Errorf("Command failed, output: %s", listKeychainsOut)
+		log.Errorf("Command failed, err: %s", err)
 		os.Exit(1)
 	}
 
@@ -611,68 +611,68 @@ func main() {
 
 	listKeychainsOut, err = runCommandAndReturnCombinedStdoutAndStderr("security", args...)
 	if err != nil {
-		log.Error("Command failed, output: %s", listKeychainsOut)
-		log.Error("Command failed, err: %s", err)
+		log.Errorf("Command failed, output: %s", listKeychainsOut)
+		log.Errorf("Command failed, err: %s", err)
 		os.Exit(1)
 	}
 
 	// Set the default keychain
 	defaultKeychainOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "default-keychain", "-s", configs.KeychainPath)
 	if err != nil {
-		log.Error("Command failed, output: %s", defaultKeychainOut)
-		log.Error("Command failed, err: %s", err)
+		log.Errorf("Command failed, output: %s", defaultKeychainOut)
+		log.Errorf("Command failed, err: %s", err)
 		os.Exit(1)
 	}
 
 	// Unlock the specified keychain
 	unlockOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "-v", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
 	if err != nil {
-		log.Error("Command failed, output: %s", unlockOut)
-		log.Error("Command failed, err: %s", err)
+		log.Errorf("Command failed, output: %s", unlockOut)
+		log.Errorf("Command failed, err: %s", err)
 		os.Exit(1)
 	}
 
 	for cert, pass := range certificatePassphraseMap {
 		certificateIdentity, err := certificateFriendlyName(cert, pass)
 		if err != nil {
-			log.Error("Failed to get cert identity, output: %s", certificateIdentity)
-			log.Error("Failed to get cert identity, err: %s", err)
+			log.Errorf("Failed to get cert identity, output: %s", certificateIdentity)
+			log.Errorf("Failed to get cert identity, err: %s", err)
 			os.Exit(1)
 		}
 		if certificateIdentity == "" {
-			log.Error("Failed to get cert identity")
+			log.Errorf("Failed to get cert identity")
 			os.Exit(1)
 		}
 
-		log.Done("   Installed certificate: %s", certificateIdentity)
+		log.Donef("   Installed certificate: %s", certificateIdentity)
 	}
 
 	certs, err := availableCertificates(configs.KeychainPath)
 	if err != nil {
-		log.Error("Failed to get certificate list, err:%s", err)
+		log.Errorf("Failed to get certificate list, err:%s", err)
 		os.Exit(1)
 	}
 	if len(certs) == 0 {
-		log.Error("Failed to import certificate, no certificates found")
+		log.Errorf("Failed to import certificate, no certificates found")
 		os.Exit(1)
 	}
 
 	fmt.Println()
-	log.Info("Available certificates:")
+	log.Infof("Available certificates:")
 	fmt.Println("-----------------------")
 	for _, cert := range certs {
-		log.Detail(" * %s", cert)
+		log.Printf(" * %s", cert)
 	}
 
 	//
 	// Install provisioning profiles
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
 	fmt.Println()
-	log.Info("Downloading & installing Provisioning Profile(s)")
+	log.Infof("Downloading & installing Provisioning Profile(s)")
 
 	for idx, profileURL := range provisioningProfileURLs {
 		fmt.Println()
-		log.Detail("=> Downloading provisioning profile: %d/%d", idx+1, profileCount)
+		log.Printf("=> Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
 		provisioningProfileExt := "provisionprofile"
 		if !strings.Contains(profileURL, "."+provisioningProfileExt) {
@@ -681,7 +681,7 @@ func main() {
 
 		profileTmpPth := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
 		if err := downloadFile(profileTmpPth, profileURL); err != nil {
-			log.Error("Download failed, err: %s", err)
+			log.Errorf("Download failed, err: %s", err)
 			os.Exit(1)
 		}
 
@@ -689,8 +689,8 @@ func main() {
 		fmt.Println("=> Installing provisioning profile")
 		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", profileTmpPth)
 		if err != nil {
-			log.Error("Command failed, output: %s", out)
-			log.Error("Command failed, err: %s", err)
+			log.Errorf("Command failed, output: %s", out)
+			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 
@@ -704,36 +704,36 @@ func main() {
 
 		tmpProvProfilePth := path.Join(tempDir, "prov")
 		if err := writeBytesToFileWithPermission(tmpProvProfilePth, []byte(out), 0); err != nil {
-			log.Error("Failed to write profile to file, error: %s", err)
+			log.Errorf("Failed to write profile to file, error: %s", err)
 			os.Exit(1)
 		}
 
 		profileInfos, err := printableProfileInfos(out)
 		if err != nil {
-			log.Error("Failed to read profile infos, err: %s", err)
+			log.Errorf("Failed to read profile infos, err: %s", err)
 			os.Exit(1)
 		}
 
 		fmt.Println()
-		log.Info("Profile Infos:")
-		log.Detail("%s", profileInfos)
+		log.Infof("Profile Infos:")
+		log.Printf("%s", profileInfos)
 		fmt.Println()
 
 		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)
 		if err != nil {
-			log.Error("Command failed, output: %s", profileUUID)
-			log.Error("Command failed, err: %s", err)
+			log.Errorf("Command failed, output: %s", profileUUID)
+			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 
-		log.Done("   Installed Profile UUID: %s", profileUUID)
+		log.Donef("   Installed Profile UUID: %s", profileUUID)
 		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
 
-		log.Detail("   Moving it to: %s", profileFinalPth)
+		log.Printf("   Moving it to: %s", profileFinalPth)
 
 		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", profileTmpPth, profileFinalPth); err != nil {
-			log.Error("Command failed, output: %s", out)
-			log.Error("Command failed, err: %s", err)
+			log.Errorf("Command failed, output: %s", out)
+			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 	}
