@@ -16,16 +16,16 @@ workflows:
   # --- workflow to Step Test
   test:
     before_run:
-    #- go-tests
+    - go-tests
     steps:
-    # - script:
-    #     title: Step audit
-    #     inputs:
-    #     - content: stepman audit --step-yml=./step.yml
-    # - script:
-    #     title: Go test
-    #     inputs:
-    #     - content: go test ./...
+    - script:
+        title: Step audit
+        inputs:
+        - content: stepman audit --step-yml=./step.yml
+    - script:
+        title: Go test
+        inputs:
+        - content: go test ./...
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         description: |-
