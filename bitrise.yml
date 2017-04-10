@@ -6,10 +6,10 @@ app:
   - RELEASE_VERSION: 1.8.4
   
   # define these in your .bitrise.secrets.yml
-  - BITRISE_CERTIFICATE_URL: $BITRISE_CERTIFICATE_URL
-  - BITRISE_CERTIFICATE_PASSPHRASE: $BITRISE_CERTIFICATE_PASSPHRASE
-  - BITRISE_PROVISION_URL: $BITRISE_PROVISION_URL
-  - BITRISE_KEYCHAIN_PASSWORD: $BITRISE_KEYCHAIN_PASSWORD
+  - BITRISE_CERTIFICATE_URL: "file:///Users/tamaspapik/Develop/go/src/github.com/bitrise-io/steps-certificate-and-profile-installer/prov.mobileprovision"
+  - BITRISE_CERTIFICATE_PASSPHRASE: "lol"
+  - BITRISE_PROVISION_URL: "file:///Users/tamaspapik/Develop/go/src/github.com/bitrise-io/steps-certificate-and-profile-installer/prov.mobileprovision"
+  - BITRISE_KEYCHAIN_PASSWORD: "NemErtek31"
 
 workflows:
   # ----------------------------------------------------------------
