@@ -1,6 +1,22 @@
-## Changelog (Current version: 1.8.1)
+## Changelog (Current version: 1.8.4)
 
 -----------------
+
+### 1.8.4 (2017 Mar 10)
+
+* [ff48ad7] prepare for 1.8.4
+* [75e9c12] test for developer id cert install (#28)
+* [79e6f41] godeps update (#27)
+
+### 1.8.3 (2017 Mar 03)
+
+* [f58688f] Prepare for 1.8.3
+* [b08a0e1] Keychain error print (#26)
+
+### 1.8.2 (2016 Dec 20)
+
+* [2705ec8] prepare for 1.8.2
+* [a47069a] Project type tag (#25)
 
 ### 1.8.1 (2016 Oct 28)
 
@@ -135,4 +151,4 @@
 
 -----------------
 
-Updated: 2016 Oct 28
+Updated: 2017 Mar 10

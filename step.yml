@@ -13,6 +13,7 @@ host_os_tags:
   - "osx-10.10"
 project_type_tags:
   - ios
+  - macos
 type_tags:
   - security
 is_requires_admin_user: false

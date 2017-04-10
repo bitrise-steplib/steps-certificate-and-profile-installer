@@ -118,19 +118,24 @@ func TestSearchIphoneAndMacCreatificates(t *testing.T) {
 		[]string{`iPhone Distribution: XYZ (72SAXYZ)`},
 		[]string{`iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)`},
 		[]string{`iPhone Distribution: XYZ (72SAXYZ)`, `iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)`},
+		[]string{`Developer ID Application: XYZ (72SAXYZ)`},
 	}
 
-	for idx, lines := range [][]string{
+	findCertsOutList := [][]string{
 		[]string{`"labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"`},
 		[]string{`"labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"`},
 		[]string{`"labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"`, `"labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"`},
-	} {
+		[]string{`"labl"<blob>="Developer ID Application: XYZ (72SAXYZ)"`},
+	}
+
+	for idx, lines := range findCertsOutList {
 		gotCerts := searchIphoneAndMacCreatificates(lines)
 		expectedCerts := expectedCertsArray[idx]
+
+		require.Equal(t, len(expectedCerts), len(gotCerts))
+
 		for i, gotCert := range gotCerts {
-			if gotCert != expectedCerts[i] {
-				t.Fatalf("Expected cert (%s) - got (%s)", expectedCerts[i], gotCert)
-			}
+			require.Equal(t, expectedCerts[i], gotCert)
 		}
 	}
 }
