@@ -387,7 +387,8 @@ func printableProfileInfos(profileContent string) (string, error) {
 		if isProvisionedDevicesSection {
 			if strings.Contains(line, provisionedDevicesArrayEndLine) {
 				isProvisionedDevicesSection = false
-				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+				//lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
+				lines = append(lines, line)
 			}
 
 			continue
