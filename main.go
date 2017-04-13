@@ -19,7 +19,7 @@ import (
 	"github.com/bitrise-io/go-utils/errorutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/hashicorp/go-version"
+	version "github.com/hashicorp/go-version"
 )
 
 const (
@@ -28,8 +28,9 @@ const (
 	developerCertificatesStartLine    = "<key>DeveloperCertificates</key>"
 	developerCertificatesArrayEndLine = "</array>"
 
-	provisionedDevicesStartLine    = "<key>ProvisionedDevices</key>"
-	provisionedDevicesArrayEndLine = "</array>"
+	provisionedDevicesStartLine      = "<key>ProvisionedDevices</key>"
+	provisionedDevicesArrayStartLine = "<array>"
+	provisionedDevicesArrayEndLine   = "</array>"
 )
 
 // -----------------------
@@ -388,9 +389,17 @@ func printableProfileInfos(profileContent string) (string, error) {
 		if isProvisionedDevicesSection {
 			if strings.Contains(line, provisionedDevicesArrayEndLine) {
 				isProvisionedDevicesSection = false
-				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
-			}
+				lines = append(lines, line)
+			} else if !strings.Contains(line, provisionedDevicesArrayStartLine) {
+				deviceID := strings.TrimSpace(strings.NewReplacer("<string>", "", "</string>", "").Replace(line))
 
+				if len(deviceID) > 8 {
+					deviceIDSubset := deviceID[4 : len(deviceID)-4]
+					lines = append(lines, strings.Replace(line, deviceIDSubset, strings.Repeat("*", len(deviceIDSubset)), -1))
+				}
+			} else {
+				lines = append(lines, line)
+			}
 			continue
 		}
 

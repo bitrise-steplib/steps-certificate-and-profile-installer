@@ -399,7 +399,9 @@ func TestPrintableProfileInfos(t *testing.T) {
 	<key>Name</key>
 	<string>iOS Distribution bitrise wild card</string>
 	<key>ProvisionedDevices</key>
-                [REDACTED]
+	<array>
+		<string>1234*******************************c322</string>
+	</array>
 	<key>TeamIdentifier</key>
 	<array>
 		<string>12344DLTN7</string>
