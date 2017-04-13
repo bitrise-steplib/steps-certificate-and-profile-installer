@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.4)
+## Changelog (Current version: 1.8.5)
 
 -----------------
+
+### 1.8.5 (2017 Apr 13)
+
+* [c74fb95] Prepare for 1.8.5
+* [5b2e0f2] Show part of provisioned devices's ID (#29)
 
 ### 1.8.4 (2017 Mar 10)
 
@@ -151,4 +156,4 @@
 
 -----------------
 
-Updated: 2017 Mar 10
+Updated: 2017 Apr 13
