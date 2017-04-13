@@ -391,10 +391,9 @@ func printableProfileInfos(profileContent string) (string, error) {
 				lines = append(lines, line)
 			} else if !strings.Contains(line, provisionedDevicesArrayStartLine) {
 				deviceID := strings.TrimSpace(strings.NewReplacer("<string>", "", "</string>", "").Replace(line))
-				deviceIDSubset := ""
 
 				if len(deviceID) > 8 {
-					deviceIDSubset = deviceID[4 : len(deviceID)-4]
+					deviceIDSubset := deviceID[4 : len(deviceID)-4]
 					lines = append(lines, strings.Replace(line, deviceIDSubset, strings.Repeat("*", len(deviceIDSubset)), -1))
 				}
 			} else {
