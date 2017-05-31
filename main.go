@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,8 +15,11 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"path/filepath"
+
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	version "github.com/hashicorp/go-version"
@@ -551,39 +553,31 @@ func main() {
 
 		// Creating a pem file from p12 certificate to get expiry date and UID
 		password := "pass:" + pass
-		certificateFolder := strings.Split(cert, "Certificate")[0]
-		pemFilePath := certificateFolder + "certificate.pem"
+		certificateFolder := filepath.Dir(cert)
+		pemFilePath := filepath.Join(certificateFolder, "certificate.pem")
 
-		_, err = runCommandAndReturnCombinedStdoutAndStderr("openssl", "pkcs12", "-in", cert, "-out", pemFilePath, "-nodes", "-passin", password)
-		if err != nil {
+		if err := command.New("openssl", "pkcs12", "-in", cert, "-out", pemFilePath, "-nodes", "-passin", password).Run(); err != nil {
 			log.Errorf("Failed to convert .p12 certificate to .pem file, error: %s", err)
+			os.Exit(1)
 		}
 
-		// Retrieving certificate expiry date from pem file metadata
-		cmd := "cat " + pemFilePath + " | openssl x509 -noout -enddate"
-		certificateExpiryDate, err := runCommandAndReturnCombinedStdoutAndStderr("bash", "-c", cmd)
+		// Retrieving certificate expiry date
+		certificatePemData, err := fileutil.ReadStringFromFile(pemFilePath)
 		if err != nil {
 			log.Errorf("Failed to read .pem file, error: %s", err)
+			os.Exit(1)
 		}
+
+		cmd := command.New("openssl", "x509", "-noout", "-enddate")
+		cmd.SetStdin(strings.NewReader(certificatePemData))
+		certificateExpiryDate, err := cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			log.Errorf("Failed to read .pem file, error: %s", err)
+			os.Exit(1)
+		}
+
 		certificateExpiryDate = strings.Split(certificateExpiryDate, "notAfter=")[1]
-		fmt.Println("---------------------------------")
-		fmt.Println("CERTIFICATION EXPIRY DATE:")
-		fmt.Println(certificateExpiryDate)
-
-		// Retrieving certificate UID from pem file
-		certificatePemData, err := ioutil.ReadFile(pemFilePath)
-		if err != nil {
-			log.Errorf("Failed to read .pem file, error: %s", err)
-		}
-
-		certificatePemString := string(certificatePemData)
-		certificatePemStringPieces := strings.Split(certificatePemString, "/UID=")
-		certificatePemStringPieces = strings.Split(certificatePemStringPieces[1], "/CN=")
-		certificateUID := certificatePemStringPieces[0]
-
-		fmt.Println("CERTIFICATION UID:")
-		fmt.Println(certificateUID)
-		fmt.Println("---------------------------------")
+		log.Printf("   Certificate expiry date: %s", certificateExpiryDate)
 
 		// Import items into a keychain.
 		importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
@@ -758,15 +752,15 @@ func main() {
 			os.Exit(1)
 		}
 
-		// profileInfos, err := printableProfileInfos(out)
-		// if err != nil {
-		// 	log.Errorf("Failed to read profile infos, err: %s", err)
-		// 	os.Exit(1)
-		// }
+		profileInfos, err := printableProfileInfos(out)
+		if err != nil {
+			log.Errorf("Failed to read profile infos, err: %s", err)
+			os.Exit(1)
+		}
 
-		// fmt.Println()
-		// log.Infof("Profile Infos:")
-		// log.Printf("%s", profileInfos)
+		fmt.Println()
+		log.Infof("Profile Infos:")
+		log.Printf("%s", profileInfos)
 		fmt.Println()
 
 		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)
@@ -786,30 +780,5 @@ func main() {
 			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
 		}
-
-		// Get provisioning profile expiry date and team identifier
-		provisioningProfileData, err := ioutil.ReadFile(profileFinalPth)
-		if err != nil {
-			log.Errorf("Failed to get provisioning profile, error: %s", err)
-		}
-
-		provisionProfileString := string(provisioningProfileData)
-		tempStringPieces := strings.Split(provisionProfileString, "ExpirationDate")
-		tempStringPieces = strings.Split(tempStringPieces[1], "<date>")
-		tempStringPieces = strings.Split(tempStringPieces[1], "</date>")
-		provisioningProfileExpiryDate := tempStringPieces[0]
-
-		fmt.Println("---------------------------------")
-		fmt.Println("PROVISIONING PROFILE EXPIRY DATE:")
-		fmt.Println(provisioningProfileExpiryDate)
-
-		tempStringPieces = strings.Split(provisionProfileString, "TeamIdentifier")
-		tempStringPieces = strings.Split(tempStringPieces[1], "<string>")
-		tempStringPieces = strings.Split(tempStringPieces[1], "</string>")
-		provisioningProfileTeamID := tempStringPieces[0]
-
-		fmt.Println("PROVISIONING PROFILE TEAM ID:")
-		fmt.Println(provisioningProfileTeamID)
-		fmt.Println("---------------------------------")
 	}
 }
