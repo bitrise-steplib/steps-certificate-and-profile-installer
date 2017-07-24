@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.8.6)
+## Changelog (Current version: 1.8.7)
 
 -----------------
+
+### 1.8.7 (2017 Jul 24)
+
+* [f16049e] prepare for 1.8.7
+* [08c0468] print output if pem conversion failed (#33)
+* [359a3ee] Cert and prov profile info prints (#31)
 
 ### 1.8.6 (2017 Jun 12)
 
@@ -161,4 +167,4 @@
 
 -----------------
 
-Updated: 2017 Jun 12
+Updated: 2017 Jul 24
