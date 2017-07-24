@@ -556,8 +556,8 @@ func main() {
 		certificateFolder := filepath.Dir(cert)
 		pemFilePath := filepath.Join(certificateFolder, "certificate.pem")
 
-		if err := command.New("openssl", "pkcs12", "-in", cert, "-out", pemFilePath, "-nodes", "-passin", password).Run(); err != nil {
-			log.Errorf("Failed to convert .p12 certificate to .pem file, error: %s", err)
+		if out, err := command.New("openssl", "pkcs12", "-in", cert, "-out", pemFilePath, "-nodes", "-passin", password).RunAndReturnTrimmedCombinedOutput(); err != nil {
+			log.Errorf("Failed to convert .p12 certificate to .pem file, out: %s, error: %s", out, err)
 			os.Exit(1)
 		}
 
