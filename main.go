@@ -15,8 +15,11 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"path/filepath"
+
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
+	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	version "github.com/hashicorp/go-version"
@@ -547,6 +550,35 @@ func main() {
 	log.Printf("=> Installing downloaded certificate")
 
 	for cert, pass := range certificatePassphraseMap {
+
+		// Creating a pem file from p12 certificate to get expiry date and UID
+		password := "pass:" + pass
+		certificateFolder := filepath.Dir(cert)
+		pemFilePath := filepath.Join(certificateFolder, "certificate.pem")
+
+		if err := command.New("openssl", "pkcs12", "-in", cert, "-out", pemFilePath, "-nodes", "-passin", password).Run(); err != nil {
+			log.Errorf("Failed to convert .p12 certificate to .pem file, error: %s", err)
+			os.Exit(1)
+		}
+
+		// Retrieving certificate expiry date
+		certificatePemData, err := fileutil.ReadStringFromFile(pemFilePath)
+		if err != nil {
+			log.Errorf("Failed to read .pem file, error: %s", err)
+			os.Exit(1)
+		}
+
+		cmd := command.New("openssl", "x509", "-noout", "-enddate")
+		cmd.SetStdin(strings.NewReader(certificatePemData))
+		certificateExpiryDate, err := cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			log.Errorf("Failed to read .pem file, error: %s", err)
+			os.Exit(1)
+		}
+
+		certificateExpiryDate = strings.Split(certificateExpiryDate, "notAfter=")[1]
+		log.Printf("   Certificate expiry date: %s", certificateExpiryDate)
+
 		// Import items into a keychain.
 		importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
 		if err != nil {
