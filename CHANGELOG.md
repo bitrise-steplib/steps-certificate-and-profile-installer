@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.7)
+## Changelog (Current version: 1.8.8)
 
 -----------------
+
+### 1.8.8 (2017 Aug 11)
+
+* [21c6851] Prepare for 1.8.8
+* [957394d] removed os.Exit(1) when checking expiry date (#34)
 
 ### 1.8.7 (2017 Jul 24)
 
@@ -167,4 +172,4 @@
 
 -----------------
 
-Updated: 2017 Jul 24
+Updated: 2017 Aug 11
