@@ -564,20 +564,20 @@ func main() {
 		// Retrieving certificate expiry date
 		certificatePemData, err := fileutil.ReadStringFromFile(pemFilePath)
 		if err != nil {
-			log.Errorf("Failed to read .pem file, error: %s", err)
-			os.Exit(1)
+			log.Warnf("Failed to read .pem file, error: %s", err)
 		}
 
 		cmd := command.New("openssl", "x509", "-noout", "-enddate")
 		cmd.SetStdin(strings.NewReader(certificatePemData))
 		certificateExpiryDate, err := cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
-			log.Errorf("Failed to read .pem file, error: %s", err)
-			os.Exit(1)
+			log.Warnf("Failed to run command: %s \n output: %s \n error: %s", cmd.PrintableCommandArgs(), certificateExpiryDate, err)
 		}
 
-		certificateExpiryDate = strings.Split(certificateExpiryDate, "notAfter=")[1]
-		log.Printf("   Certificate expiry date: %s", certificateExpiryDate)
+		certificateExpiryDateSplit := strings.Split(certificateExpiryDate, "notAfter=")
+		if len(certificateExpiryDateSplit) > 1 {
+			log.Printf("   Certificate expiry date: %s", certificateExpiryDateSplit[1])
+		}
 
 		// Import items into a keychain.
 		importOut, err := runCommandAndReturnCombinedStdoutAndStderr("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
