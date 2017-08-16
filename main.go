@@ -787,14 +787,24 @@ func main() {
 		log.Donef("   Installed Profile UUID: %s", profileUUID)
 		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
 
-		expiryDate, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print :ExpirationDate", tmpProvProfilePth)
+		rawExpiryDate, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print :ExpirationDate", tmpProvProfilePth)
 		if err != nil {
-			log.Errorf("Command failed, output: %s", expiryDate)
+			log.Errorf("Command failed, output: %s", rawExpiryDate)
 			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
 		}
 
-		log.Printf("   Expiry date: %s", expiryDate)
+		log.Printf("   Expiry date: %s", rawExpiryDate)
+
+		//checking for valid profile expiry date
+		expiryDate, err := time.Parse("Mon Jan 02 15:04:05 MST 2006", rawExpiryDate)
+		if err != nil {
+			log.Warnf("   Could not parse profile expiry date.\n error: %s", err)
+		}
+
+		if time.Now().After(expiryDate) {
+			log.Warnf("   WARNING: provisioning profile is expired!")
+		}
 
 		log.Printf("   Moving it to: %s", profileFinalPth)
 
