@@ -549,7 +549,22 @@ func main() {
 	fmt.Println()
 	log.Printf("=> Installing downloaded certificate")
 
+
 	for cert, pass := range certificatePassphraseMap {
+
+		fmt.Println()
+
+		certificateIdentity, err := certificateFriendlyName(cert, pass)
+		if err != nil {
+			log.Errorf("Failed to get cert identity, output: %s \n error: %s", certificateIdentity, err)
+			os.Exit(1)
+		}
+		if certificateIdentity == "" {
+			log.Errorf("Failed to get cert identity")
+			os.Exit(1)
+		}
+
+		log.Donef("Installed certificate: %s", certificateIdentity)
 
 		// Creating a pem file from p12 certificate to get expiry date and UID
 		password := "pass:" + pass
@@ -564,30 +579,30 @@ func main() {
 		// Retrieving certificate expiry date
 		certificatePemData, err := fileutil.ReadStringFromFile(pemFilePath)
 		if err != nil {
-			log.Warnf("Failed to read .pem file, error: %s", err)
+			log.Warnf("      Failed to read .pem file, error: %s", err)
 		}
 
 		cmd := command.New("openssl", "x509", "-noout", "-enddate")
 		cmd.SetStdin(strings.NewReader(certificatePemData))
 		certificateExpiryDate, err := cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
-			log.Warnf("Failed to run command: %s \n output: %s \n error: %s", cmd.PrintableCommandArgs(), certificateExpiryDate, err)
+			log.Warnf("      Failed to run command: %s \n output: %s \n error: %s", cmd.PrintableCommandArgs(), certificateExpiryDate, err)
 		}
 
 		certificateExpiryDateSplit := strings.Split(certificateExpiryDate, "notAfter=")
 		if len(certificateExpiryDateSplit) > 1 {
 			rawExpiryDate := certificateExpiryDateSplit[1]
 
-			log.Printf("   Certificate expiry date: %s", rawExpiryDate)
+			log.Printf("      Certificate expiry date: %s", rawExpiryDate)
 
 			//checking for valid certification expiry date
 			expiryDate, err := time.Parse("Jan 02 15:04:05 2006 MST", rawExpiryDate)
 			if err != nil {
-				log.Warnf("Could not parse certificate expiry date.\n error: %s", err)
+				log.Warnf("      Could not parse certificate expiry date.\n error: %s", err)
 			}
 
 			if time.Now().After(expiryDate) {
-				log.Warnf("WARNING: Certificate is expired on: %s.", certificateExpiryDateSplit)
+				log.Warnf("      WARNING: certificate is expired!")
 			}
 		}
 
@@ -688,20 +703,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	for cert, pass := range certificatePassphraseMap {
-		certificateIdentity, err := certificateFriendlyName(cert, pass)
-		if err != nil {
-			log.Errorf("Failed to get cert identity, output: %s", certificateIdentity)
-			log.Errorf("Failed to get cert identity, err: %s", err)
-			os.Exit(1)
-		}
-		if certificateIdentity == "" {
-			log.Errorf("Failed to get cert identity")
-			os.Exit(1)
-		}
 
-		log.Donef("   Installed certificate: %s", certificateIdentity)
-	}
 
 	certs, err := availableCertificates(configs.KeychainPath)
 	if err != nil {
