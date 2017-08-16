@@ -576,7 +576,19 @@ func main() {
 
 		certificateExpiryDateSplit := strings.Split(certificateExpiryDate, "notAfter=")
 		if len(certificateExpiryDateSplit) > 1 {
-			log.Printf("   Certificate expiry date: %s", certificateExpiryDateSplit[1])
+			rawExpiryDate := certificateExpiryDateSplit[1]
+
+			log.Printf("   Certificate expiry date: %s", rawExpiryDate)
+
+			//checking for valid certification expiry date
+			expiryDate, err := time.Parse("Jan 02 15:04:05 2006 MST", rawExpiryDate)
+			if err != nil {
+				log.Warnf("Could not parse certificate expiry date.\n error: %s", err)
+			}
+
+			if time.Now().After(expiryDate) {
+				log.Warnf("WARNING: Certificate is expired on: %s.", certificateExpiryDateSplit)
+			}
 		}
 
 		// Import items into a keychain.
