@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.8)
+## Changelog (Current version: 1.8.9)
 
 -----------------
+
+### 1.8.9 (2017 Sep 27)
+
+* [d37f92d] Prepare for 1.8.9
+* [c33f2d3] Expiry date checkings (#35)
 
 ### 1.8.8 (2017 Aug 11)
 
@@ -172,4 +177,4 @@
 
 -----------------
 
-Updated: 2017 Aug 11
+Updated: 2017 Sep 27
