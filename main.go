@@ -432,7 +432,13 @@ func main() {
 	certificateURLPassphraseMap := map[string]string{}
 
 	if configs.CertificateURL != "" {
-		certificateURLs := strings.Split(configs.CertificateURL, "|")
+		certificateURLs := []string{}
+		for _, certURL := range strings.Split(configs.CertificateURL, "|") {
+			if certURL != "" {
+				certificateURLs = append(certificateURLs, certURL)
+			}
+		}
+
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
@@ -462,7 +468,12 @@ func main() {
 	}
 
 	// Validate Provisioning Profiles
-	provisioningProfileURLs := strings.Split(configs.ProvisioningProfileURL, "|")
+	provisioningProfileURLs := []string{}
+	for _, profileURL := range strings.Split(configs.ProvisioningProfileURL, "|") {
+		if profileURL != "" {
+			provisioningProfileURLs = append(provisioningProfileURLs, profileURL)
+		}
+	}
 
 	if configs.DefaultProvisioningProfileURL != "" {
 		log.Printf("Default Provisioning Profile given")
@@ -552,14 +563,6 @@ func main() {
 
 	for cert, pass := range certificatePassphraseMap {
 
-		log.Infof("Certificate Infos:")
-		certInfo, err := certificateutil.CertificateInfos(cert, pass)
-		if err != nil {
-			log.Errorf("Failed to get cert identity, error: %s", err)
-			os.Exit(1)
-		}
-		log.Donef("%v", certInfo)
-
 		fmt.Println()
 
 		certificateIdentity, err := certificateFriendlyName(cert, pass)
@@ -573,6 +576,13 @@ func main() {
 		}
 
 		log.Donef("Installed certificate: %s", certificateIdentity)
+
+		certInfo, err := certificateutil.CertificateInfosFromP12(cert, pass)
+		if err != nil {
+			log.Errorf("Failed to get cert identity, error: %s", err)
+			os.Exit(1)
+		}
+		log.Printf("%s", certInfo.String())
 
 		// Creating a pem file from p12 certificate to get expiry date and UID
 		password := "pass:" + pass

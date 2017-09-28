@@ -1,6 +1,7 @@
 package certificateutil
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -13,12 +14,15 @@ import (
 
 // CertificateInfosModel ...
 type CertificateInfosModel struct {
-	UserID     string
-	CommonName string
-	TeamID     string
-	Name       string
-	Local      string
-	EndDate    time.Time
+	UserID         string
+	CommonName     string
+	TeamID         string
+	Name           string
+	Local          string
+	EndDate        time.Time
+	RawSubject     string
+	RawEndDate     string
+	IsDevelopement bool
 }
 
 func convertP12ToPem(p12Pth, password string) (string, error) {
@@ -35,12 +39,27 @@ func convertP12ToPem(p12Pth, password string) (string, error) {
 	return pemPth, nil
 }
 
-func certificateInfos(pemPth string) (CertificateInfosModel, error) {
+func certificateInfosByPath(pemPth string) (CertificateInfosModel, error) {
 	out, err := command.New("openssl", "x509", "-in", pemPth, "-noout", "-enddate", "-subject").RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return CertificateInfosModel{}, fmt.Errorf("failed to read certificate infos, out: %s, error: %s", out, err)
 	}
 
+	return parseCertificateInfoOutput(out)
+}
+
+func certificateInfosByContent(pemContent []byte) (CertificateInfosModel, error) {
+	cmd := command.New("openssl", "x509", "-noout", "-enddate", "-subject")
+	cmd.SetStdin(bytes.NewReader(pemContent))
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return CertificateInfosModel{}, fmt.Errorf("failed to read certificate infos, out: %s, error: %s", out, err)
+	}
+
+	return parseCertificateInfoOutput(out)
+}
+
+func parseCertificateInfoOutput(out string) (CertificateInfosModel, error) {
 	lines := strings.Split(out, "\n")
 	if len(lines) < 2 {
 		return CertificateInfosModel{}, fmt.Errorf("failed to parse certificate infos")
@@ -61,7 +80,7 @@ func certificateInfos(pemPth string) (CertificateInfosModel, error) {
 
 		certificateInfos.EndDate = endDate
 	} else {
-		return CertificateInfosModel{}, fmt.Errorf("failed to parse certificate end date")
+		certificateInfos.RawEndDate = endDateLine
 	}
 
 	// subject= /UID=5KN/CN=iPhone Developer: Bitrise Bot (T36)/OU=339/O=Bitrise Bot/C=US
@@ -80,17 +99,49 @@ func certificateInfos(pemPth string) (CertificateInfosModel, error) {
 		certificateInfos.TeamID = teamID
 		certificateInfos.Name = name
 		certificateInfos.Local = local
+		certificateInfos.IsDevelopement = (strings.Contains(commonName, "Developer:") || strings.Contains(commonName, "Development:"))
+	} else {
+		certificateInfos.IsDevelopement = (strings.Contains(subjectLine, "Developer:") || strings.Contains(subjectLine, "Development:"))
+		certificateInfos.RawSubject = subjectLine
 	}
 
 	return certificateInfos, nil
 }
 
-// CertificateInfos ...
-func CertificateInfos(p12Pth, password string) (CertificateInfosModel, error) {
+// CertificateInfosFromP12 ...
+func CertificateInfosFromP12(p12Pth, password string) (CertificateInfosModel, error) {
 	pemPth, err := convertP12ToPem(p12Pth, password)
 	if err != nil {
 		return CertificateInfosModel{}, err
 	}
 
-	return certificateInfos(pemPth)
+	return certificateInfosByPath(pemPth)
+}
+
+// CertificateInfosFromPemContent ...
+func CertificateInfosFromPemContent(pemContent []byte) (CertificateInfosModel, error) {
+	return certificateInfosByContent(pemContent)
+}
+
+func (certInfo CertificateInfosModel) String() string {
+	certInfoString := ""
+
+	if certInfo.RawSubject == "" {
+		certInfoString += fmt.Sprintf("- UserID: %s\n", certInfo.UserID)
+		certInfoString += fmt.Sprintf("- CommonName: %s\n", certInfo.CommonName)
+		certInfoString += fmt.Sprintf("- TeamID: %s\n", certInfo.TeamID)
+		certInfoString += fmt.Sprintf("- Locale: %s\n", certInfo.Local)
+		certInfoString += fmt.Sprintf("- UserID: %s\n", certInfo.UserID)
+	} else {
+		certInfoString += fmt.Sprintf("- RawSubject: %s\n", certInfo.RawSubject)
+	}
+
+	if certInfo.RawEndDate == "" {
+		certInfoString += fmt.Sprintf("- EndDate: %s\n", certInfo.EndDate)
+	} else {
+		certInfoString += fmt.Sprintf("- RawEndDate: %s\n", certInfo.RawEndDate)
+	}
+	certInfoString += fmt.Sprintf("- IsDevelopement: %t", certInfo.IsDevelopement)
+
+	return certInfoString
 }
