@@ -42,7 +42,23 @@ func convertP12ToPem(p12Pth, password string) (string, error) {
 	return pemPth, nil
 }
 
-func certificateInfos(pemContent []byte) (CertificateInfosModel, error) {
+// CertificateInfosFromP12 ...
+func CertificateInfosFromP12(p12Pth, password string) (CertificateInfosModel, error) {
+	pemPth, err := convertP12ToPem(p12Pth, password)
+	if err != nil {
+		return CertificateInfosModel{}, err
+	}
+
+	pemContent, err := fileutil.ReadBytesFromFile(pemPth)
+	if err != nil {
+		return CertificateInfosModel{}, err
+	}
+
+	return CertificateInfosFromPemContent(pemContent)
+}
+
+// CertificateInfosFromPemContent ...
+func CertificateInfosFromPemContent(pemContent []byte) (CertificateInfosModel, error) {
 	cmd := command.New("openssl", "x509", "-noout", "-enddate", "-subject")
 	cmd.SetStdin(bytes.NewReader(pemContent))
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
@@ -100,35 +116,12 @@ func certificateInfos(pemContent []byte) (CertificateInfosModel, error) {
 	return certificateInfos, nil
 }
 
-// CertificateInfosFromP12 ...
-func CertificateInfosFromP12(p12Pth, password string) (CertificateInfosModel, error) {
-	pemPth, err := convertP12ToPem(p12Pth, password)
-	if err != nil {
-		return CertificateInfosModel{}, err
-	}
-
-	pemContent, err := fileutil.ReadBytesFromFile(pemPth)
-	if err != nil {
-		return CertificateInfosModel{}, err
-	}
-
-	return certificateInfos(pemContent)
-}
-
-// CertificateInfosFromPemContent ...
-func CertificateInfosFromPemContent(pemContent []byte) (CertificateInfosModel, error) {
-	return certificateInfos(pemContent)
-}
-
 func (certInfo CertificateInfosModel) String() string {
 	certInfoString := ""
 
 	if certInfo.CommonName != "" && certInfo.TeamID != "" {
-		certInfoString += fmt.Sprintf("- UserID: %s\n", certInfo.UserID)
 		certInfoString += fmt.Sprintf("- CommonName: %s\n", certInfo.CommonName)
 		certInfoString += fmt.Sprintf("- TeamID: %s\n", certInfo.TeamID)
-		certInfoString += fmt.Sprintf("- Locale: %s\n", certInfo.Local)
-		certInfoString += fmt.Sprintf("- UserID: %s\n", certInfo.UserID)
 	} else {
 		certInfoString += fmt.Sprintf("- RawSubject: %s\n", certInfo.RawSubject)
 	}
