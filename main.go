@@ -22,6 +22,7 @@ import (
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/steps-certificate-and-profile-installer/certificateutil"
 	version "github.com/hashicorp/go-version"
 )
 
@@ -549,8 +550,15 @@ func main() {
 	fmt.Println()
 	log.Printf("=> Installing downloaded certificate")
 
-
 	for cert, pass := range certificatePassphraseMap {
+
+		log.Infof("Certificate Infos:")
+		certInfo, err := certificateutil.CertificateInfos(cert, pass)
+		if err != nil {
+			log.Errorf("Failed to get cert identity, error: %s", err)
+			os.Exit(1)
+		}
+		log.Donef("%v", certInfo)
 
 		fmt.Println()
 
@@ -702,8 +710,6 @@ func main() {
 		log.Errorf("Command failed, err: %s", err)
 		os.Exit(1)
 	}
-
-
 
 	certs, err := availableCertificates(configs.KeychainPath)
 	if err != nil {
