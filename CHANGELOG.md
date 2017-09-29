@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.8.9)
+## Changelog (Current version: 1.9.0)
 
 -----------------
+
+### 1.9.0 (2017 Sep 29)
+
+* [5a5ee02] Prepare for 1.9.0
+* [7c0ded2] Cert profile packages (#38)
 
 ### 1.8.9 (2017 Sep 27)
 
@@ -177,4 +182,4 @@
 
 -----------------
 
-Updated: 2017 Sep 27
+Updated: 2017 Sep 29
