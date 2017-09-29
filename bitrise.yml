@@ -16,7 +16,7 @@ workflows:
   # --- workflow to Step Test
   test:
     before_run:
-    - go-tests
+    #- go-tests
     steps:
     - script:
         title: Step audit
