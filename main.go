@@ -549,8 +549,10 @@ func main() {
 		for _, certInfo := range certInfos {
 			log.Donef("%s", certInfo.CommonName)
 			log.Printf("%s", certInfo.String())
-			if certInfo.EndDate.Before(time.Now()) {
-				log.Warnf("[!] Expired")
+			if !certInfo.EndDate.IsZero() {
+				if certInfo.EndDate.Before(time.Now()) {
+					log.Warnf("[!] Expired")
+				}
 			}
 		}
 
@@ -726,8 +728,10 @@ func main() {
 		if !hasValidCertificate {
 			log.Errorf("[X] No valid certificate installed for this provisioning profile")
 		}
-		if prof.ExpirationDate.Before(time.Now()) {
-			log.Warnf("[!] Expired")
+		if !prof.ExpirationDate.IsZero() {
+			if prof.ExpirationDate.Before(time.Now()) {
+				log.Warnf("[!] Expired")
+			}
 		}
 	}
 }
