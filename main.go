@@ -117,8 +117,6 @@ func downloadFile(destionationPath, URL string) error {
 
 	tmpDstFilePath := ""
 	if scheme != "file" {
-		log.Printf("   Downloading (%s) to (%s)", secureInput(URL), destionationPath)
-
 		tmpDir, err := pathutil.NormalizedOSTempDirPath("download")
 		if err != nil {
 			return err
