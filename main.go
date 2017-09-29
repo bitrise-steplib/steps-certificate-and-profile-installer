@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -10,30 +9,21 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
 
-	"path/filepath"
-
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
-	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/steps-certificate-and-profile-installer/certificateutil"
+	"github.com/bitrise-io/steps-certificate-and-profile-installer/profileutil"
 	version "github.com/hashicorp/go-version"
 )
 
 const (
 	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
-
-	developerCertificatesStartLine    = "<key>DeveloperCertificates</key>"
-	developerCertificatesArrayEndLine = "</array>"
-
-	provisionedDevicesStartLine      = "<key>ProvisionedDevices</key>"
-	provisionedDevicesArrayStartLine = "<array>"
-	provisionedDevicesArrayEndLine   = "</array>"
 )
 
 // -----------------------
@@ -118,8 +108,6 @@ func downloadFile(destionationPath, URL string) error {
 
 	tmpDstFilePath := ""
 	if scheme != "file" {
-		log.Printf("   Downloading (%s) to (%s)", secureInput(URL), destionationPath)
-
 		tmpDir, err := pathutil.NormalizedOSTempDirPath("download")
 		if err != nil {
 			return err
@@ -170,7 +158,6 @@ func downloadFile(destionationPath, URL string) error {
 
 		tmpDstFilePath = tmpDstFile.Name()
 	} else {
-		log.Printf("   Moving (%s) to (%s)", secureInput(URL), destionationPath)
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
@@ -218,76 +205,6 @@ func writeBytesToFileWithPermission(pth string, fileCont []byte, perm os.FileMod
 	}
 
 	return nil
-}
-
-func searchIphoneAndMacCreatificates(lines []string) []string {
-	// "labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"
-	certExp := regexp.MustCompile(`\"labl\"<blob>=\"(?P<profile>.*)\"`)
-
-	// "labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"
-	longCertExp := regexp.MustCompile(`\"labl\"<blob>=.* \"(?P<profile>.*)\"`)
-
-	certs := []string{}
-	certFound := false
-
-	for _, line := range lines {
-		certRes := certExp.FindStringSubmatch(line)
-		if certRes != nil {
-			cert := certRes[1]
-			certs = append(certs, cert)
-			certFound = true
-		}
-		if !certFound {
-			certRes := longCertExp.FindStringSubmatch(line)
-			if certRes != nil {
-				cert := certRes[1]
-				certs = append(certs, cert)
-			}
-		}
-		certFound = false
-	}
-
-	filteredCerts := []string{}
-	for _, cert := range certs {
-		if strings.HasPrefix(cert, "iPhone") ||
-			strings.HasPrefix(cert, "Mac") ||
-			strings.HasPrefix(cert, "3rd Party Mac") ||
-			strings.HasPrefix(cert, "Developer ID") {
-			filteredCerts = append(filteredCerts, cert)
-		}
-	}
-
-	return filteredCerts
-}
-
-func searchFriendlyName(certStr string) string {
-	// friendlyName: iPhone Distribution: XYZ (72SXYZ)
-	certificateIdentityExp := regexp.MustCompile(`friendlyName: (?P<identity>.*)`)
-	certificateIdentityRes := certificateIdentityExp.FindStringSubmatch(certStr)
-	if certificateIdentityRes != nil {
-		return certificateIdentityRes[1]
-	}
-	return ""
-}
-
-func certificateFriendlyName(certificatePath, certificatePassphrase string) (string, error) {
-	out, err := runCommandAndReturnCombinedStdoutAndStderr("openssl", "pkcs12", "-info", "-nodes", "-in", certificatePath, "-passin", "pass:"+certificatePassphrase)
-	if err != nil {
-		return out, err
-	}
-	name := searchFriendlyName(out)
-	return name, nil
-}
-
-func availableCertificates(keychainPath string) ([]string, error) {
-	out, err := runCommandAndReturnCombinedStdoutAndStderr("security", "find-certificate", "-a", keychainPath)
-	if err != nil {
-		return []string{}, fmt.Errorf("Failed to list keys, err: %s", err)
-	}
-
-	outSplit := strings.Split(out, "\n")
-	certs := searchIphoneAndMacCreatificates(outSplit)
-	return certs, nil
 }
 
 func strip(str string) string {
@@ -360,60 +277,6 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func printableProfileInfos(profileContent string) (string, error) {
-	lines := []string{}
-	isDeveloperCertificatesSection := false
-	isProvisionedDevicesSection := false
-
-	scanner := bufio.NewScanner(strings.NewReader(profileContent))
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.Contains(line, developerCertificatesStartLine) {
-			isDeveloperCertificatesSection = true
-			lines = append(lines, line)
-			continue
-		}
-		if isDeveloperCertificatesSection {
-			if strings.Contains(line, developerCertificatesArrayEndLine) {
-				isDeveloperCertificatesSection = false
-				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
-			}
-
-			continue
-		}
-
-		if strings.Contains(line, provisionedDevicesStartLine) {
-			isProvisionedDevicesSection = true
-			lines = append(lines, line)
-			continue
-		}
-		if isProvisionedDevicesSection {
-			if strings.Contains(line, provisionedDevicesArrayEndLine) {
-				isProvisionedDevicesSection = false
-				lines = append(lines, line)
-			} else if !strings.Contains(line, provisionedDevicesArrayStartLine) {
-				deviceID := strings.TrimSpace(strings.NewReplacer("<string>", "", "</string>", "").Replace(line))
-
-				if len(deviceID) > 8 {
-					deviceIDSubset := deviceID[4 : len(deviceID)-4]
-					lines = append(lines, strings.Replace(line, deviceIDSubset, strings.Repeat("*", len(deviceIDSubset)), -1))
-				}
-			} else {
-				lines = append(lines, line)
-			}
-			continue
-		}
-
-		lines = append(lines, line)
-	}
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
-	}
-
-	return strings.Join(lines, "\n"), nil
-}
-
 //--------------------
 // Main
 //--------------------
@@ -431,7 +294,13 @@ func main() {
 	certificateURLPassphraseMap := map[string]string{}
 
 	if configs.CertificateURL != "" {
-		certificateURLs := strings.Split(configs.CertificateURL, "|")
+		certificateURLs := []string{}
+		for _, certURL := range strings.Split(configs.CertificateURL, "|") {
+			if certURL != "" {
+				certificateURLs = append(certificateURLs, certURL)
+			}
+		}
+
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
@@ -461,7 +330,12 @@ func main() {
 	}
 
 	// Validate Provisioning Profiles
-	provisioningProfileURLs := strings.Split(configs.ProvisioningProfileURL, "|")
+	provisioningProfileURLs := []string{}
+	for _, profileURL := range strings.Split(configs.ProvisioningProfileURL, "|") {
+		if profileURL != "" {
+			provisioningProfileURLs = append(provisioningProfileURLs, profileURL)
+		}
+	}
 
 	if configs.DefaultProvisioningProfileURL != "" {
 		log.Printf("Default Provisioning Profile given")
@@ -527,12 +401,12 @@ func main() {
 	// Download certificate
 	fmt.Println()
 	log.Infof("Downloading & installing Certificate(s)")
+	fmt.Println()
 
 	certificatePassphraseMap := map[string]string{}
 	idx := 0
 	for certURL, pass := range certificateURLPassphraseMap {
-		fmt.Println()
-		log.Printf("=> Downloading certificate: %d/%d", idx+1, certificateCount)
+		log.Printf("Downloading certificate: %d/%d", idx+1, certificateCount)
 
 		certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
 		if err := downloadFile(certPath, certURL); err != nil {
@@ -546,63 +420,26 @@ func main() {
 
 	//
 	// Install certificate
+	log.Printf("Installing downloaded certificates")
 	fmt.Println()
-	log.Printf("=> Installing downloaded certificate")
 
+	installedCertificates := []certificateutil.CertificateInfosModel{}
 
 	for cert, pass := range certificatePassphraseMap {
-
-		fmt.Println()
-
-		certificateIdentity, err := certificateFriendlyName(cert, pass)
+		certInfos, err := certificateutil.CertificateInfosFromP12(cert, pass)
 		if err != nil {
-			log.Errorf("Failed to get cert identity, output: %s \n error: %s", certificateIdentity, err)
+			log.Errorf("Failed to get cert identity, error: %s", err)
 			os.Exit(1)
 		}
-		if certificateIdentity == "" {
-			log.Errorf("Failed to get cert identity")
-			os.Exit(1)
-		}
+		installedCertificates = append(installedCertificates, certInfos...)
 
-		log.Donef("Installed certificate: %s", certificateIdentity)
-
-		// Creating a pem file from p12 certificate to get expiry date and UID
-		password := "pass:" + pass
-		certificateFolder := filepath.Dir(cert)
-		pemFilePath := filepath.Join(certificateFolder, "certificate.pem")
-
-		if out, err := command.New("openssl", "pkcs12", "-in", cert, "-out", pemFilePath, "-nodes", "-passin", password).RunAndReturnTrimmedCombinedOutput(); err != nil {
-			log.Errorf("Failed to convert .p12 certificate to .pem file, out: %s, error: %s", out, err)
-			os.Exit(1)
-		}
-
-		// Retrieving certificate expiry date
-		certificatePemData, err := fileutil.ReadStringFromFile(pemFilePath)
-		if err != nil {
-			log.Warnf("      Failed to read .pem file, error: %s", err)
-		}
-
-		cmd := command.New("openssl", "x509", "-noout", "-enddate")
-		cmd.SetStdin(strings.NewReader(certificatePemData))
-		certificateExpiryDate, err := cmd.RunAndReturnTrimmedCombinedOutput()
-		if err != nil {
-			log.Warnf("      Failed to run command: %s \n output: %s \n error: %s", cmd.PrintableCommandArgs(), certificateExpiryDate, err)
-		}
-
-		certificateExpiryDateSplit := strings.Split(certificateExpiryDate, "notAfter=")
-		if len(certificateExpiryDateSplit) > 1 {
-			rawExpiryDate := certificateExpiryDateSplit[1]
-
-			log.Printf("      Certificate expiry date: %s", rawExpiryDate)
-
-			//checking for valid certification expiry date
-			expiryDate, err := time.Parse("Jan 02 15:04:05 2006 MST", rawExpiryDate)
-			if err != nil {
-				log.Warnf("      Could not parse certificate expiry date.\n error: %s", err)
-			}
-
-			if time.Now().After(expiryDate) {
-				log.Warnf("      WARNING: certificate is expired!")
+		for _, certInfo := range certInfos {
+			log.Donef("%s", certInfo.CommonName)
+			log.Printf("%s", certInfo.String())
+			if !certInfo.EndDate.IsZero() {
+				if certInfo.EndDate.Before(time.Now()) {
+					log.Warnf("[!] Expired")
+				}
 			}
 		}
 
@@ -703,25 +540,6 @@ func main() {
 		os.Exit(1)
 	}
 
-
-
-	certs, err := availableCertificates(configs.KeychainPath)
-	if err != nil {
-		log.Errorf("Failed to get certificate list, err:%s", err)
-		os.Exit(1)
-	}
-	if len(certs) == 0 {
-		log.Errorf("Failed to import certificate, no certificates found")
-		os.Exit(1)
-	}
-
-	fmt.Println()
-	log.Infof("Available certificates:")
-	fmt.Println("-----------------------")
-	for _, cert := range certs {
-		log.Printf(" * %s", cert)
-	}
-
 	//
 	// Install provisioning profiles
 	// NOTE: the URL can be a pipe (|) separated list of Provisioning Profile URLs
@@ -730,7 +548,7 @@ func main() {
 
 	for idx, profileURL := range provisioningProfileURLs {
 		fmt.Println()
-		log.Printf("=> Downloading provisioning profile: %d/%d", idx+1, profileCount)
+		log.Printf("Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
 		provisioningProfileExt := "provisionprofile"
 		if !strings.Contains(profileURL, "."+provisioningProfileExt) {
@@ -743,8 +561,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Println()
-		fmt.Println("=> Installing provisioning profile")
+		fmt.Println("Installing provisioning profile")
 		out, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/bin/security", "cms", "-D", "-i", profileTmpPth)
 		if err != nil {
 			log.Errorf("Command failed, output: %s", out)
@@ -766,52 +583,42 @@ func main() {
 			os.Exit(1)
 		}
 
-		profileInfos, err := printableProfileInfos(out)
+		prof, err := profileutil.ProfileFromFile(profileTmpPth)
 		if err != nil {
-			log.Errorf("Failed to read profile infos, err: %s", err)
-			os.Exit(1)
+			log.Errorf("%s", err)
+			return
 		}
 
-		fmt.Println()
-		log.Infof("Profile Infos:")
-		log.Printf("%s", profileInfos)
-		fmt.Println()
+		profileFinalPth := path.Join(provisioningProfileDir, prof.UUID+"."+provisioningProfileExt)
 
-		profileUUID, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print UUID", tmpProvProfilePth)
-		if err != nil {
-			log.Errorf("Command failed, output: %s", profileUUID)
-			log.Errorf("Command failed, err: %s", err)
-			os.Exit(1)
-		}
-
-		log.Donef("   Installed Profile UUID: %s", profileUUID)
-		profileFinalPth := path.Join(provisioningProfileDir, profileUUID+"."+provisioningProfileExt)
-
-		rawExpiryDate, err := runCommandAndReturnCombinedStdoutAndStderr("/usr/libexec/PlistBuddy", "-c", "Print :ExpirationDate", tmpProvProfilePth)
-		if err != nil {
-			log.Errorf("Command failed, output: %s", rawExpiryDate)
-			log.Errorf("Command failed, err: %s", err)
-			os.Exit(1)
-		}
-
-		log.Printf("   Expiry date: %s", rawExpiryDate)
-
-		//checking for valid profile expiry date
-		expiryDate, err := time.Parse("Mon Jan 02 15:04:05 MST 2006", rawExpiryDate)
-		if err != nil {
-			log.Warnf("   Could not parse profile expiry date.\n error: %s", err)
-		}
-
-		if time.Now().After(expiryDate) {
-			log.Warnf("   WARNING: provisioning profile is expired!")
-		}
-
-		log.Printf("   Moving it to: %s", profileFinalPth)
+		log.Printf("Moving it to: %s", profileFinalPth)
 
 		if out, err := runCommandAndReturnCombinedStdoutAndStderr("cp", profileTmpPth, profileFinalPth); err != nil {
 			log.Errorf("Command failed, output: %s", out)
 			log.Errorf("Command failed, err: %s", err)
 			os.Exit(1)
+		}
+
+		fmt.Println()
+		log.Donef(prof.Name)
+		log.Printf("%s", prof.String())
+
+		hasValidCertificate := false
+		for _, devCert := range prof.DeveloperCertificates {
+			for _, installedCert := range installedCertificates {
+				if devCert.RawEndDate == installedCert.RawEndDate && devCert.RawSubject == installedCert.RawSubject {
+					hasValidCertificate = true
+					break
+				}
+			}
+		}
+		if !hasValidCertificate {
+			log.Errorf("[X] No valid certificate installed for this provisioning profile")
+		}
+		if !prof.ExpirationDate.IsZero() {
+			if prof.ExpirationDate.Before(time.Now()) {
+				log.Warnf("[!] Expired")
+			}
 		}
 	}
 }

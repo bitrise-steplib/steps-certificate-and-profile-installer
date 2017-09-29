@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 const profileContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -109,51 +107,6 @@ Key Attributes: <No Attributes>
 MIIEogIBAAKCAQEA1KmLAKXfDg8YJFNb72nqkmexLiK8UC3Fqq5y0k9omfMx35yA
 -----END RSA PRIVATE KEY-----
 `
-
-func TestSearchIphoneAndMacCreatificates(t *testing.T) {
-	// "labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"
-	// "labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"
-
-	expectedCertsArray := [][]string{
-		[]string{`iPhone Distribution: XYZ (72SAXYZ)`},
-		[]string{`iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)`},
-		[]string{`iPhone Distribution: XYZ (72SAXYZ)`, `iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)`},
-		[]string{`Developer ID Application: XYZ (72SAXYZ)`},
-	}
-
-	findCertsOutList := [][]string{
-		[]string{`"labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"`},
-		[]string{`"labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"`},
-		[]string{`"labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"`, `"labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"`},
-		[]string{`"labl"<blob>="Developer ID Application: XYZ (72SAXYZ)"`},
-	}
-
-	for idx, lines := range findCertsOutList {
-		gotCerts := searchIphoneAndMacCreatificates(lines)
-		expectedCerts := expectedCertsArray[idx]
-
-		require.Equal(t, len(expectedCerts), len(gotCerts))
-
-		for i, gotCert := range gotCerts {
-			require.Equal(t, expectedCerts[i], gotCert)
-		}
-	}
-}
-
-func TestSearchFriendlyName(t *testing.T) {
-	expectedNames := []string{friendlyName, ""}
-
-	for idx, lines := range []string{
-		certValid,
-		certInvalid,
-	} {
-		gotName := searchFriendlyName(lines)
-		expectedName := expectedNames[idx]
-		if gotName != expectedName {
-			t.Fatalf("Expected cert (%s) - got (%s)", expectedName, gotName)
-		}
-	}
-}
 
 func TestStip(t *testing.T) {
 	t.Log(`Nothing to strip`)
@@ -355,66 +308,5 @@ func TestSecureInput(t *testing.T) {
 		if got != expected {
 			t.Fatalf("Expected: (%s), got: (%s)", expected, got)
 		}
-	}
-}
-
-func TestPrintableProfileInfos(t *testing.T) {
-	t.Log()
-	{
-		profileInfos, err := printableProfileInfos(profileContent)
-		require.NoError(t, err)
-		require.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>AppIDName</key>
-	<string>bitrise wild card</string>
-	<key>ApplicationIdentifierPrefix</key>
-	<array>
-	<string>12344DLTN7</string>
-	</array>
-	<key>CreationDate</key>
-	<date>2016-09-21T13:34:31Z</date>
-	<key>Platform</key>
-	<array>
-		<string>iOS</string>
-	</array>
-	<key>DeveloperCertificates</key>
-                [REDACTED]
-	<key>Entitlements</key>
-	<dict>
-		<key>keychain-access-groups</key>
-		<array>
-			<string>12344DLTN7.*</string>
-		</array>
-		<key>get-task-allow</key>
-		<false/>
-		<key>application-identifier</key>
-		<string>12344DLTN7.com.bitrise.*</string>
-		<key>com.apple.developer.team-identifier</key>
-		<string>12344DLTN7</string>
-	</dict>
-	<key>ExpirationDate</key>
-	<date>2017-09-21T13:20:06Z</date>
-	<key>Name</key>
-	<string>iOS Distribution bitrise wild card</string>
-	<key>ProvisionedDevices</key>
-	<array>
-		<string>1234*******************************c322</string>
-	</array>
-	<key>TeamIdentifier</key>
-	<array>
-		<string>12344DLTN7</string>
-	</array>
-	<key>TeamName</key>
-	<string>Bitrise</string>
-	<key>TimeToLive</key>
-	<integer>364</integer>
-	<key>UUID</key>
-	<string>12345-57d7-4183-85f8-9dc5710447dd</string>
-	<key>Version</key>
-	<integer>1</integer>
-</dict>
-</plist>`, profileInfos)
 	}
 }
