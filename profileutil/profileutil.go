@@ -16,12 +16,12 @@ type ProfileModel struct {
 	Name                  string
 	TeamIdentifier        string
 	UUID                  string
-	ExpirationDate        time.Time
-	ProvisionedDevices    []string
-	ExportType            exportoptions.Method
-	DeveloperCertificates []certificateutil.CertificateInfosModel
 	ApplicationIdentifier string
 	BundleIdentifier      string
+	ProvisionedDevices    []string
+	ExpirationDate        time.Time
+	ExportType            exportoptions.Method
+	DeveloperCertificates []certificateutil.CertificateInfosModel
 }
 
 // ProfileFromFile ...
@@ -33,12 +33,12 @@ func ProfileFromFile(provPath string) (ProfileModel, error) {
 
 	profileModel := ProfileModel{
 		Name:                  profile.GetName(),
-		TeamIdentifier:        profile.GetTeamID(),
 		UUID:                  profile.GetUUID(),
-		ExpirationDate:        profile.GetExpirationDate(),
+		TeamIdentifier:        profile.GetTeamID(),
 		ExportType:            profile.GetExportMethod(),
-		ApplicationIdentifier: profile.GetApplicationIdentifier(),
+		ExpirationDate:        profile.GetExpirationDate(),
 		BundleIdentifier:      profile.GetBundleIdentifier(),
+		ApplicationIdentifier: profile.GetApplicationIdentifier(),
 	}
 
 	profilePlistData := plistutil.PlistData(profile)

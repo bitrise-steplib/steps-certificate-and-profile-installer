@@ -8,10 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
-
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
 )
 
@@ -70,10 +69,8 @@ func CertificateInfosFromPemContent(pemContent []byte) ([]CertificateInfosModel,
 	}
 
 	for _, pem := range pems {
-		pemContent := []byte(pem)
-
 		cmd := command.New("openssl", "x509", "-noout", "-enddate", "-subject")
-		cmd.SetStdin(bytes.NewReader(pemContent))
+		cmd.SetStdin(bytes.NewReader([]byte(pem)))
 		out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
 			return []CertificateInfosModel{}, fmt.Errorf("failed to read certificate infos, out: %s, error: %s", out, err)
@@ -195,7 +192,6 @@ func (certInfo CertificateInfosModel) String() string {
 	certInfoString := ""
 
 	if certInfo.CommonName != "" && certInfo.TeamID != "" {
-		//certInfoString += fmt.Sprintf("- CommonName: %s\n", certInfo.CommonName)
 		certInfoString += fmt.Sprintf("- TeamID: %s\n", certInfo.TeamID)
 	} else {
 		certInfoString += fmt.Sprintf("- RawSubject: %s\n", certInfo.RawSubject)
