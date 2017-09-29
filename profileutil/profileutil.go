@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/steps-certificate-and-profile-installer/certificateutil"
 	"github.com/bitrise-tools/go-xcode/exportoptions"
 	"github.com/bitrise-tools/go-xcode/plistutil"
@@ -18,7 +17,7 @@ type ProfileModel struct {
 	TeamIdentifier        string
 	UUID                  string
 	ExpirationDate        time.Time
-	ProvisionedDevices    []string //!!!!!!!!!!!!
+	ProvisionedDevices    []string
 	ExportType            exportoptions.Method
 	DeveloperCertificates []certificateutil.CertificateInfosModel
 	ApplicationIdentifier string
@@ -54,7 +53,7 @@ func ProfileFromFile(provPath string) (ProfileModel, error) {
 		for _, cert := range certData {
 			certModel, err := certificateutil.CertificateInfosFromDerContent(cert)
 			if err != nil {
-				log.Errorf("Failed to get certificate from profile, error: %s", err)
+				return ProfileModel{}, fmt.Errorf("Failed to get certificate info from profile(%s), error: %s", profileModel.UUID, err)
 			}
 			profileModel.DeveloperCertificates = append(profileModel.DeveloperCertificates, certModel)
 		}
