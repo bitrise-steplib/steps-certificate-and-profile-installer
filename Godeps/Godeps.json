@@ -8,36 +8,48 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
-			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/command",
-			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/fileutil",
-			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/log",
-			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "9c30a7825aa1064e423a0f1dba751fec990b07be"
+			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+		},
+		{
+			"ImportPath": "github.com/bitrise-tools/go-xcode/exportoptions",
+			"Rev": "c28b7bd9ac8bdc8b1ce79e23da4639b1399a0d38"
+		},
+		{
+			"ImportPath": "github.com/bitrise-tools/go-xcode/plistutil",
+			"Rev": "c28b7bd9ac8bdc8b1ce79e23da4639b1399a0d38"
+		},
+		{
+			"ImportPath": "github.com/bitrise-tools/go-xcode/provisioningprofile",
+			"Rev": "c28b7bd9ac8bdc8b1ce79e23da4639b1399a0d38"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Comment": "v1.1.0",
-			"Rev": "346938d642f2ec3594ed81d874461961cd0faa76"
+			"Comment": "v1.1.0-7-ga476722",
+			"Rev": "a476722483882dd40b8111f0eb64e1d7f43f56e4"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/go-version",
-			"Rev": "03c5bf6be031b6dd45afec16b1cf94fc8938bc77"
+			"Rev": "fc61389e27c71d120f87031ca8c88a3428f372dd"
 		},
 		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
@@ -46,13 +58,17 @@
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.1.4-65-ge964b17",
-			"Rev": "e964b172ca7f4c322ee4c39ea605ff53fab44f79"
+			"Comment": "v1.1.4-71-g890a5c3",
+			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/require",
-			"Comment": "v1.1.4-65-ge964b17",
-			"Rev": "e964b172ca7f4c322ee4c39ea605ff53fab44f79"
+			"Comment": "v1.1.4-71-g890a5c3",
+			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
+		},
+		{
+			"ImportPath": "howett.net/plist",
+			"Rev": "2f847ea62b17703c861484a09f0e5841328a2cb9"
 		}
 	]
 }
