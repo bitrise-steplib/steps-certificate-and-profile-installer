@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -26,13 +24,6 @@ import (
 
 const (
 	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
-
-	developerCertificatesStartLine    = "<key>DeveloperCertificates</key>"
-	developerCertificatesArrayEndLine = "</array>"
-
-	provisionedDevicesStartLine      = "<key>ProvisionedDevices</key>"
-	provisionedDevicesArrayStartLine = "<array>"
-	provisionedDevicesArrayEndLine   = "</array>"
 )
 
 // -----------------------
@@ -216,56 +207,6 @@ func writeBytesToFileWithPermission(pth string, fileCont []byte, perm os.FileMod
 	return nil
 }
 
-func searchIphoneAndMacCreatificates(lines []string) []string {
-	// "labl"<blob>="iPhone Distribution: XYZ (72SAXYZ)"
-	certExp := regexp.MustCompile(`\"labl\"<blob>=\"(?P<profile>.*)\"`)
-
-	// "labl"<blob>=0x6950686F6E6520446973747269627574696F6E3A20436C616E2056656E74757265205547202868616674756E6773626573636872EFBFBD6E6B7429202844564D455A524D50444D29  "iPhone Distribution: XYZ (xyz\357\277\275xyz) (XYZ)"
-	longCertExp := regexp.MustCompile(`\"labl\"<blob>=.* \"(?P<profile>.*)\"`)
-
-	certs := []string{}
-	certFound := false
-
-	for _, line := range lines {
-		certRes := certExp.FindStringSubmatch(line)
-		if certRes != nil {
-			cert := certRes[1]
-			certs = append(certs, cert)
-			certFound = true
-		}
-		if !certFound {
-			certRes := longCertExp.FindStringSubmatch(line)
-			if certRes != nil {
-				cert := certRes[1]
-				certs = append(certs, cert)
-			}
-		}
-		certFound = false
-	}
-
-	filteredCerts := []string{}
-	for _, cert := range certs {
-		if strings.HasPrefix(cert, "iPhone") ||
-			strings.HasPrefix(cert, "Mac") ||
-			strings.HasPrefix(cert, "3rd Party Mac") ||
-			strings.HasPrefix(cert, "Developer ID") {
-			filteredCerts = append(filteredCerts, cert)
-		}
-	}
-
-	return filteredCerts
-}
-
-func searchFriendlyName(certStr string) string {
-	// friendlyName: iPhone Distribution: XYZ (72SXYZ)
-	certificateIdentityExp := regexp.MustCompile(`friendlyName: (?P<identity>.*)`)
-	certificateIdentityRes := certificateIdentityExp.FindStringSubmatch(certStr)
-	if certificateIdentityRes != nil {
-		return certificateIdentityRes[1]
-	}
-	return ""
-}
-
 func strip(str string) string {
 	strippedStr := strings.TrimSpace(str)
 	strippedStr = strings.Trim(strippedStr, "\"")
@@ -334,60 +275,6 @@ func secureInput(str string) string {
 	}
 
 	return prefix + sec
-}
-
-func printableProfileInfos(profileContent string) (string, error) {
-	lines := []string{}
-	isDeveloperCertificatesSection := false
-	isProvisionedDevicesSection := false
-
-	scanner := bufio.NewScanner(strings.NewReader(profileContent))
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.Contains(line, developerCertificatesStartLine) {
-			isDeveloperCertificatesSection = true
-			lines = append(lines, line)
-			continue
-		}
-		if isDeveloperCertificatesSection {
-			if strings.Contains(line, developerCertificatesArrayEndLine) {
-				isDeveloperCertificatesSection = false
-				lines = append(lines, fmt.Sprintf("%s[REDACTED]", strings.Repeat(" ", 16)))
-			}
-
-			continue
-		}
-
-		if strings.Contains(line, provisionedDevicesStartLine) {
-			isProvisionedDevicesSection = true
-			lines = append(lines, line)
-			continue
-		}
-		if isProvisionedDevicesSection {
-			if strings.Contains(line, provisionedDevicesArrayEndLine) {
-				isProvisionedDevicesSection = false
-				lines = append(lines, line)
-			} else if !strings.Contains(line, provisionedDevicesArrayStartLine) {
-				deviceID := strings.TrimSpace(strings.NewReplacer("<string>", "", "</string>", "").Replace(line))
-
-				if len(deviceID) > 8 {
-					deviceIDSubset := deviceID[4 : len(deviceID)-4]
-					lines = append(lines, strings.Replace(line, deviceIDSubset, strings.Repeat("*", len(deviceIDSubset)), -1))
-				}
-			} else {
-				lines = append(lines, line)
-			}
-			continue
-		}
-
-		lines = append(lines, line)
-	}
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("Failed to scan profile, error: %s", err)
-	}
-
-	return strings.Join(lines, "\n"), nil
 }
 
 //--------------------
