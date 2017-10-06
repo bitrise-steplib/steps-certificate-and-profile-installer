@@ -264,7 +264,7 @@ func printCertificate(certInfo certificateutil.CertificateInfoModel) {
 		log.Printf("endDate: %s", certInfo.EndDate)
 
 		if certInfo.IsExpired() {
-			log.Errorf("[X] expired")
+			log.Errorf("[X] certificate expired")
 		}
 	}
 }
@@ -289,15 +289,15 @@ func printProfile(profileInfo profileutil.ProfileInfoModel, installedCertificate
 	}
 
 	if !profileInfo.HasInstalledCertificate(installedCertificates) {
-		log.Errorf("[X] non of the profile's certificates is installed")
+		log.Errorf("[X] none of the profile's certificates are installed")
 	}
 
 	if profileInfo.IsXcodeManaged() {
-		log.Warnf("[!] xcode managed")
+		log.Warnf("[!] xcode managed profile")
 	}
 
 	if profileInfo.IsExpired() {
-		log.Errorf("[X] expired")
+		log.Errorf("[X] profile expired")
 	}
 }
 
