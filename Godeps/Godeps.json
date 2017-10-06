@@ -36,20 +36,20 @@
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-xcode/exportoptions",
-			"Rev": "522b4ae77e8006c31fd39ffeb446d345a99e3257"
+			"Rev": "5fd7d023fe0ded4fe884825ded0fc21f98fb743c"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-xcode/plistutil",
-			"Rev": "522b4ae77e8006c31fd39ffeb446d345a99e3257"
+			"Rev": "5fd7d023fe0ded4fe884825ded0fc21f98fb743c"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-xcode/provisioningprofile",
-			"Rev": "522b4ae77e8006c31fd39ffeb446d345a99e3257"
+			"Rev": "5fd7d023fe0ded4fe884825ded0fc21f98fb743c"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Comment": "v1.1.0-8-gdce690a",
-			"Rev": "dce690a33ebe33040a7a2ffeb96dd200060f3fca"
+			"Comment": "v1.1.0-9-gecdeabc",
+			"Rev": "ecdeabc65495df2dec95d7c4a4c3e021903035e5"
 		},
 		{
 			"ImportPath": "github.com/hashicorp/go-version",
