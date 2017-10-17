@@ -1,13 +1,18 @@
 package certificateutil
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/bitrise-io/go-utils/fileutil"
+
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/pkcs12"
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +26,7 @@ type CertificateInfoModel struct {
 	EndDate    time.Time
 
 	Serial string
+	Hash   string
 
 	RawSubject string
 	RawEndDate string
@@ -147,21 +153,119 @@ func CertificateInfosFromDerContent(pemContent []byte) (CertificateInfoModel, er
 
 // CertificateInfosFromP12 ...
 func CertificateInfosFromP12(p12Pth, password string) ([]CertificateInfoModel, error) {
-	pem, err := convertP12ToPem(p12Pth, password)
+	p12, err := fileutil.ReadBytesFromFile(p12Pth)
 	if err != nil {
-		return []CertificateInfoModel{}, err
+		return nil, err
 	}
 
-	return CertificateInfosFromPemContent(pem)
+	_, certificates, err := pkcs12.DecodeAllCerts(p12, password)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, certificate := range certificates {
+		b, err := json.MarshalIndent(certificate, "", "\t")
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Printf("cert: %s\n", string(b))
+	}
+
+	return nil, nil
 }
 
-// InstalledCertificates ...
-func InstalledCertificates() ([]CertificateInfoModel, error) {
-	cmd := command.New("security", "find-certificate", "-a", "-p")
+// InstalledCodesigningCertificateNamesFromOutput ...
+func InstalledCodesigningCertificateNamesFromOutput(out string) ([]string, error) {
+	pettern := `^[0-9]+\) (?P<hash>.*) "(?P<name>.*)"`
+	re := regexp.MustCompile(pettern)
+
+	certificateNameMap := map[string]bool{}
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if matches := re.FindStringSubmatch(line); len(matches) == 3 {
+			name := matches[2]
+			certificateNameMap[name] = true
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	names := []string{}
+	for name := range certificateNameMap {
+		names = append(names, name)
+	}
+	return names, nil
+}
+
+// InstalledCodesigningCertificateNames ...
+func InstalledCodesigningCertificateNames() ([]string, error) {
+	cmd := command.New("security", "find-identity", "-v", "-p", "codesigning")
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return nil, commandError(cmd.PrintableCommandArgs(), out, err)
 	}
+	return InstalledCodesigningCertificateNamesFromOutput(out)
+}
 
-	return CertificateInfosFromPemContent(out)
+func trimAndParseSHA1HashLines(out string) ([]string, string, error) {
+	hashes := []string{}
+	trimmedLines := []string{}
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "SHA-1 hash: ") {
+			hash := strings.TrimPrefix(line, "SHA-1 hash: ")
+			hashes = append(hashes, hash)
+		} else {
+			trimmedLines = append(trimmedLines, line)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, "", err
+	}
+	return hashes, strings.Join(trimmedLines, "\n"), nil
+}
+
+// InstalledCertificates ...
+func InstalledCertificates() ([]CertificateInfoModel, error) {
+	certificateNames, err := InstalledCodesigningCertificateNames()
+	if err != nil {
+		return nil, err
+	}
+
+	certificates := []CertificateInfoModel{}
+	for _, name := range certificateNames {
+		cmd := command.New("security", "find-certificate", "-c", name, "-a", "-p", "-Z")
+		out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			return nil, commandError(cmd.PrintableCommandArgs(), out, err)
+		}
+
+		hashes, trimmedOut, err := trimAndParseSHA1HashLines(out)
+		if err != nil {
+			return nil, err
+		}
+
+		certs, err := CertificateInfosFromPemContent(trimmedOut)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(hashes) != len(certs) {
+			return nil, fmt.Errorf("certificates (%d) and its hashes (%d) count should equal", len(certs), len(hashes))
+		}
+
+		for idx, cert := range certs {
+			hash := hashes[idx]
+			cert.Hash = hash
+			cert.Name = name
+
+			certificates = append(certificates, cert)
+		}
+	}
+
+	return certificates, nil
 }

@@ -8,27 +8,35 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/colorstring",
-			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/command",
-			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/errorutil",
-			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/fileutil",
-			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/log",
-			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
 		},
 		{
 			"ImportPath": "github.com/bitrise-io/go-utils/pathutil",
-			"Rev": "6eb582e08179a025ed2deb86ea6dffbd13ba1ff6"
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/pkcs12",
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
+		},
+		{
+			"ImportPath": "github.com/bitrise-io/go-utils/pkcs12/internal/rc2",
+			"Rev": "720486737e3287907152cf073721bcb61bdb73ca"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-steputils/input",
@@ -36,15 +44,15 @@
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-xcode/exportoptions",
-			"Rev": "5fd7d023fe0ded4fe884825ded0fc21f98fb743c"
+			"Rev": "2e7e0b318c0143aad4aca6dd7d6ed43db68eff8e"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-xcode/plistutil",
-			"Rev": "5fd7d023fe0ded4fe884825ded0fc21f98fb743c"
+			"Rev": "2e7e0b318c0143aad4aca6dd7d6ed43db68eff8e"
 		},
 		{
 			"ImportPath": "github.com/bitrise-tools/go-xcode/provisioningprofile",
-			"Rev": "5fd7d023fe0ded4fe884825ded0fc21f98fb743c"
+			"Rev": "2e7e0b318c0143aad4aca6dd7d6ed43db68eff8e"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
@@ -77,7 +85,7 @@
 		},
 		{
 			"ImportPath": "howett.net/plist",
-			"Rev": "2f847ea62b17703c861484a09f0e5841328a2cb9"
+			"Rev": "f00f32b327ca6ad11a7c53d9ccc34d031b3795b8"
 		}
 	]
 }
