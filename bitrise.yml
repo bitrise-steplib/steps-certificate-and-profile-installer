@@ -86,7 +86,7 @@ workflows:
             #!/bin/bash
             set -ex
 
-            go test ./...
+            go test "$GOLIST_WITHOUT_VENDOR"
 
   _install-test-tools:
     steps:
