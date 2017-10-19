@@ -14,9 +14,9 @@ import (
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/steps-certificate-and-profile-installer/certificateutil"
-	"github.com/bitrise-io/steps-certificate-and-profile-installer/profileutil"
 	"github.com/bitrise-tools/go-steputils/input"
+	"github.com/bitrise-tools/go-xcode/certificateutil"
+	"github.com/bitrise-tools/go-xcode/profileutil"
 	version "github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
