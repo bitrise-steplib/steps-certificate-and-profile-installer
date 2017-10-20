@@ -16,6 +16,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-tools/go-steputils/input"
 	"github.com/bitrise-tools/go-xcode/certificateutil"
+	"github.com/bitrise-tools/go-xcode/plistutil"
 	"github.com/bitrise-tools/go-xcode/profileutil"
 	version "github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
@@ -259,11 +260,30 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	}
 }
 
+func collectCapabilities(entitlements plistutil.PlistData) map[string]interface{} {
+	capabilities := map[string]interface{}{}
+	for key, value := range entitlements {
+		found := profileutil.KnownProfileCapabilitiesMap[key]
+		if found {
+			capabilities[key] = value
+		}
+	}
+	return capabilities
+}
+
 func printProfileInfo(info profileutil.ProvisioningProfileInfoModel, installedCertificates []certificateutil.CertificateInfoModel) {
 	log.Donef("%s (%s)", info.Name, info.UUID)
 	log.Printf("exportType: %s", string(info.ExportType))
 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
 	log.Printf("bundleID: %s", info.BundleID)
+
+	capabitlities := collectCapabilities(info.Entitlements)
+	if len(capabitlities) > 0 {
+		log.Printf("capabitlities:")
+		for key, value := range capabitlities {
+			log.Printf("- %s: %v", key, value)
+		}
+	}
 
 	log.Printf("certificates:")
 	for _, certificateInfo := range info.DeveloperCertificates {
@@ -272,9 +292,11 @@ func printProfileInfo(info profileutil.ProvisioningProfileInfoModel, installedCe
 		log.Printf("  teamID: %s", certificateInfo.TeamID)
 	}
 
-	log.Printf("devices:")
-	for _, deviceID := range info.ProvisionedDevices {
-		log.Printf("- %s", deviceID)
+	if len(info.ProvisionedDevices) > 0 {
+		log.Printf("devices:")
+		for _, deviceID := range info.ProvisionedDevices {
+			log.Printf("- %s", deviceID)
+		}
 	}
 
 	log.Printf("expire: %s", info.ExpirationDate)
