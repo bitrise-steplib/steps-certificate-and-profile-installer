@@ -1,6 +1,15 @@
-## Changelog (Current version: 1.9.1)
+## Changelog (Current version: 1.9.2)
 
 -----------------
+
+### 1.9.2 (2017 Oct 20)
+
+* [4ac8c0c] prepare for 1.9.2
+* [72da3ad] print profile capabilities (#45)
+* [27bf649] manage packages with dep (#44)
+* [a8db7c2] refactor (#43)
+* [77287ae] use pkcs packages instead of openssl calls (#42)
+* [bb7c38c] Updated IsXcodeManaged check (#40)
 
 ### 1.9.1 (2017 Oct 06)
 
@@ -190,4 +199,4 @@
 
 -----------------
 
-Updated: 2017 Oct 06
+Updated: 2017 Oct 20
