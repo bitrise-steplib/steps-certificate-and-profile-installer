@@ -17,7 +17,7 @@
   branch = "master"
   name = "github.com/bitrise-tools/go-xcode"
   packages = ["certificateutil","exportoptions","plistutil","profileutil"]
-  revision = "122319b199b766f321faffb953f2dfb326d93e50"
+  revision = "c820668f24b67aa8cb58e687a87ec024fafbdf3b"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -59,11 +59,11 @@
   branch = "master"
   name = "howett.net/plist"
   packages = ["."]
-  revision = "487325fdf24d0b27ca779dbbfcad9ab36dbcc420"
+  revision = "233df3c4f07b0c562da0e8a6fb850681ac49bb90"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ca4510f687c9d5b6386a34d3c2029d5edb47c8aaceb9506f260d283e4702e8b0"
+  inputs-digest = "477c857aeb04ae7961e915fb661b78f0013fbfdfdacc9882b0ce79cc2a6c720a"
   solver-name = "gps-cdcl"
   solver-version = 1
