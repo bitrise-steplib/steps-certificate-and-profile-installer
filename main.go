@@ -255,8 +255,8 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
 	log.Printf("expire: %s", info.EndDate)
 
-	if info.IsExpired() {
-		log.Errorf("[X] certificate expired")
+	if err := info.CheckValidity(); err != nil {
+		log.Errorf("[X] %s", err)
 	}
 }
 
@@ -305,8 +305,8 @@ func printProfileInfo(info profileutil.ProvisioningProfileInfoModel, installedCe
 		log.Errorf("[X] none of the profile's certificates are installed")
 	}
 
-	if info.IsExpired() {
-		log.Errorf("[X] profile expired")
+	if err := info.CheckValidity(); err != nil {
+		log.Errorf("[X] %s", err)
 	}
 
 	if info.IsXcodeManaged() {
