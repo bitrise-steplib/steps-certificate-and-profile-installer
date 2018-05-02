@@ -14,7 +14,7 @@ import (
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-tools/go-steputils/stepconf"
+	"github.com/bitrise-tools/go-steputils/input"
 	"github.com/bitrise-tools/go-xcode/certificateutil"
 	"github.com/bitrise-tools/go-xcode/plistutil"
 	"github.com/bitrise-tools/go-xcode/profileutil"
@@ -32,17 +32,31 @@ const (
 
 // ConfigsModel ...
 type ConfigsModel struct {
-	CertificateURL         string `env:"certificate_url"`
-	CertificatePassphrase  string `env:"certificate_passphrase"`
-	ProvisioningProfileURL string `env:"provisioning_profile_url"`
+	CertificateURL         string
+	CertificatePassphrase  string
+	ProvisioningProfileURL string
 
-	InstallDefaults               bool   `env:"install_defaults"`
-	DefaultCertificateURL         string `env:"default_certificate_url"`
-	DefaultCertificatePassphrase  string `env:"default_certificate_passphrase"`
-	DefaultProvisioningProfileURL string `env:"default_provisioning_profile_url"`
+	DefaultCertificateURL         string
+	DefaultCertificatePassphrase  string
+	DefaultProvisioningProfileURL string
 
-	KeychainPath     string `env:"keychain_path,required"`
-	KeychainPassword string `env:"keychain_password,required"`
+	KeychainPath     string
+	KeychainPassword string
+}
+
+func createConfigsModelFromEnvs() ConfigsModel {
+	return ConfigsModel{
+		CertificateURL:         os.Getenv("certificate_url"),
+		CertificatePassphrase:  os.Getenv("certificate_passphrase"),
+		ProvisioningProfileURL: os.Getenv("provisioning_profile_url"),
+
+		DefaultCertificateURL:         os.Getenv("default_certificate_url"),
+		DefaultCertificatePassphrase:  os.Getenv("default_certificate_passphrase"),
+		DefaultProvisioningProfileURL: os.Getenv("default_provisioning_profile_url"),
+
+		KeychainPath:     os.Getenv("keychain_path"),
+		KeychainPassword: os.Getenv("keychain_password"),
+	}
 }
 
 func secureInput(str string) string {
@@ -90,6 +104,33 @@ func secureInput(str string) string {
 	}
 
 	return prefix + sec
+}
+
+func (configs ConfigsModel) print() {
+	fmt.Println()
+	log.Infof("Configs:")
+	log.Printf(" - CertificateURL: %s", secureInput(configs.CertificateURL))
+	log.Printf(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
+	log.Printf(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
+
+	log.Printf(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
+	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
+	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
+
+	log.Printf(" - KeychainPath: %s", configs.KeychainPath)
+	log.Printf(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
+}
+
+func (configs ConfigsModel) validate() error {
+	if err := input.ValidateIfNotEmpty(configs.KeychainPath); err != nil {
+		return fmt.Errorf("issue with inpout KeychainPath: %s", err)
+	}
+
+	if err := input.ValidateIfNotEmpty(configs.KeychainPassword); err != nil {
+		return fmt.Errorf("issue with inpout KeychainPassword: %s", err)
+	}
+
+	return nil
 }
 
 //--------------------
@@ -222,13 +263,7 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 func collectCapabilities(entitlements plistutil.PlistData) map[string]interface{} {
 	capabilities := map[string]interface{}{}
 	for key, value := range entitlements {
-		found := profileutil.KnownProfileCapabilitiesMap[profileutil.ProfileTypeIos][key]
-		if found {
-			capabilities[key] = value
-			continue
-		}
-
-		found = profileutil.KnownProfileCapabilitiesMap[profileutil.ProfileTypeMacOs][key]
+		found := profileutil.KnownProfileCapabilitiesMap[key]
 		if found {
 			capabilities[key] = value
 		}
@@ -298,12 +333,12 @@ func failE(err error) {
 //--------------------
 
 func main() {
-	var configs ConfigsModel
-	if err := stepconf.Parse(&configs); err != nil {
-		log.Errorf("Error: %s\n", err)
-		os.Exit(1)
+	configs := createConfigsModelFromEnvs()
+	configs.print()
+	if err := configs.validate(); err != nil {
+		failF("Issue with input: %s", err)
 	}
-	stepconf.Print(configs)
+	fmt.Println()
 
 	// Collect Certificates
 	certificateURLPassphraseMap := map[string]string{}
@@ -326,7 +361,7 @@ func main() {
 		}
 	}
 
-	if configs.DefaultCertificateURL != "" && configs.InstallDefaults {
+	if configs.DefaultCertificateURL != "" {
 		log.Printf("Default Certificate given")
 		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
 	}

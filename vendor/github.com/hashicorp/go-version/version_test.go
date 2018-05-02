@@ -24,7 +24,6 @@ func TestNewVersion(t *testing.T) {
 		{"1.2.3.4", false},
 		{"1.2.0.4-x.Y.0+metadata", false},
 		{"1.2.0.4-x.Y.0+metadata-width-hypen", false},
-		{"1.2.0-X-1.2.0+metadata~dist", false},
 		{"1.2.3.4-rc1-with-hypen", false},
 		{"1.2.3.4", false},
 		{"v1.2.3", false},
@@ -65,7 +64,6 @@ func TestVersionCompare(t *testing.T) {
 		{"v1.2.3.0", "v1.2.3.4", -1},
 		{"1.7rc2", "1.7rc1", 1},
 		{"1.7rc2", "1.7", -1},
-		{"1.2.0", "1.2.0-X-1.2.0+metadata~dist", 1},
 	}
 
 	for _, tc := range cases {
@@ -98,10 +96,8 @@ func TestComparePreReleases(t *testing.T) {
 	}{
 		{"1.2-beta.2", "1.2-beta.2", 0},
 		{"1.2-beta.1", "1.2-beta.2", -1},
-		{"1.2-beta.2", "1.2-beta.11", -1},
 		{"3.2-alpha.1", "3.2-alpha", 1},
 		{"1.2-beta.2", "1.2-beta.1", 1},
-		{"1.2-beta.11", "1.2-beta.2", 1},
 		{"1.2-beta", "1.2-beta.3", -1},
 		{"1.2-alpha", "1.2-beta.3", -1},
 		{"1.2-beta", "1.2-alpha.3", 1},
@@ -146,7 +142,6 @@ func TestVersionMetadata(t *testing.T) {
 		{"1.2-beta", ""},
 		{"1.2.0-x.Y.0", ""},
 		{"1.2.0-x.Y.0+metadata", "metadata"},
-		{"1.2.0-metadata-1.2.0+metadata~dist", "metadata~dist"},
 	}
 
 	for _, tc := range cases {
@@ -172,7 +167,6 @@ func TestVersionPrerelease(t *testing.T) {
 		{"1.2-beta", "beta"},
 		{"1.2.0-x.Y.0", "x.Y.0"},
 		{"1.2.0-x.Y.0+metadata", "x.Y.0"},
-		{"1.2.0-metadata-1.2.0+metadata~dist", "metadata-1.2.0"},
 	}
 
 	for _, tc := range cases {
@@ -198,7 +192,6 @@ func TestVersionSegments(t *testing.T) {
 		{"1.2-beta", []int{1, 2, 0}},
 		{"1-x.Y.0", []int{1, 0, 0}},
 		{"1.2.0-x.Y.0+metadata", []int{1, 2, 0}},
-		{"1.2.0-metadata-1.2.0+metadata~dist", []int{1, 2, 0}},
 	}
 
 	for _, tc := range cases {
@@ -247,7 +240,6 @@ func TestVersionString(t *testing.T) {
 		{"1.2-beta", "1.2.0-beta"},
 		{"1.2.0-x.Y.0", "1.2.0-x.Y.0"},
 		{"1.2.0-x.Y.0+metadata", "1.2.0-x.Y.0+metadata"},
-		{"1.2.0-metadata-1.2.0+metadata~dist", "1.2.0-metadata-1.2.0+metadata~dist"},
 	}
 
 	for _, tc := range cases {

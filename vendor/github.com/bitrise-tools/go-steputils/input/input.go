@@ -2,7 +2,6 @@ package input
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/bitrise-io/go-utils/pathutil"
 )
@@ -52,18 +51,6 @@ func ValidateIfDirExists(input string) error {
 		return fmt.Errorf("dir not exist at: %s", input)
 	}
 	return nil
-}
-
-// ValidateInt ...
-func ValidateInt(input string) (int, error) {
-	if input == "" {
-		return 0, nil
-	}
-	num, err := strconv.Atoi(input)
-	if err != nil {
-		return 0, fmt.Errorf("can't convert to int, error: %v", err)
-	}
-	return num, nil
 }
 
 // SecureInput ...
