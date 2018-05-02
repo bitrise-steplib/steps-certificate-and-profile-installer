@@ -4,20 +4,39 @@
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-io/go-utils"
-  packages = ["colorstring","command","errorutil","fileutil","log","pathutil","pkcs12","pkcs12/internal/rc2"]
-  revision = "961320f9011cedf55e1da0578949bf63450a96c0"
+  packages = [
+    "colorstring",
+    "command",
+    "errorutil",
+    "fileutil",
+    "log",
+    "parseutil",
+    "pathutil",
+    "pkcs12",
+    "pkcs12/internal/rc2",
+    "pointers"
+  ]
+  revision = "2d657206204605ce3b86124c33fea53c3e380d78"
 
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-tools/go-steputils"
-  packages = ["input"]
-  revision = "a848c9870ff7d745a8fb2a951e1c81fcb147b4ec"
+  packages = [
+    "input",
+    "stepconf"
+  ]
+  revision = "d4d9e08cc4347e8784bb18419fcdceb932e17019"
 
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-tools/go-xcode"
-  packages = ["certificateutil","exportoptions","plistutil","profileutil"]
-  revision = "c820668f24b67aa8cb58e687a87ec024fafbdf3b"
+  packages = [
+    "certificateutil",
+    "exportoptions",
+    "plistutil",
+    "profileutil"
+  ]
+  revision = "2ebe49789dd410cae7f6dc54f0d2f5893e4fd1a0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -29,19 +48,19 @@
   branch = "master"
   name = "github.com/fullsailor/pkcs7"
   packages = ["."]
-  revision = "a009d8d7de53d9503c797cb8ec66fa3b21eed209"
+  revision = "ae226422660e5ca10db350d33f81c6608f3fbcdd"
 
 [[projects]]
   branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
+  revision = "23480c0665776210b5fbbac6eaaee40e3e6a96b7"
 
 [[projects]]
   branch = "master"
   name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "f15c970de5b76fac0b59abb32d62c17cc7bed265"
+  revision = "816c9085562cd7ee03e7f8188a1cfd942858cded"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -52,18 +71,21 @@
 [[projects]]
   branch = "master"
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
-  revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
+  packages = [
+    "assert",
+    "require"
+  ]
+  revision = "c679ae2cc0cb27ec3293fea7e254e47386f05d69"
 
 [[projects]]
   branch = "master"
   name = "howett.net/plist"
   packages = ["."]
-  revision = "233df3c4f07b0c562da0e8a6fb850681ac49bb90"
+  revision = "3bf914ef8f3a8bec3df2721a531d3a693c0a3db9"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "477c857aeb04ae7961e915fb661b78f0013fbfdfdacc9882b0ce79cc2a6c720a"
+  inputs-digest = "8aef316755d3d5f2e7f08075c5ae4df8b31893ef51439f775fdb80f88b6fd5e6"
   solver-name = "gps-cdcl"
   solver-version = 1
