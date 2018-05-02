@@ -36,6 +36,7 @@ type ConfigsModel struct {
 	CertificatePassphrase  string
 	ProvisioningProfileURL string
 
+	InstallDefaults               string
 	DefaultCertificateURL         string
 	DefaultCertificatePassphrase  string
 	DefaultProvisioningProfileURL string
@@ -50,6 +51,7 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		CertificatePassphrase:  os.Getenv("certificate_passphrase"),
 		ProvisioningProfileURL: os.Getenv("provisioning_profile_url"),
 
+		InstallDefaults:               os.Getenv("install_defaults"),
 		DefaultCertificateURL:         os.Getenv("default_certificate_url"),
 		DefaultCertificatePassphrase:  os.Getenv("default_certificate_passphrase"),
 		DefaultProvisioningProfileURL: os.Getenv("default_provisioning_profile_url"),
@@ -113,6 +115,7 @@ func (configs ConfigsModel) print() {
 	log.Printf(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
 	log.Printf(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
 
+	log.Printf(" - InstallDefaults: %s", configs.InstallDefaults)
 	log.Printf(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
 	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
 	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
@@ -122,6 +125,10 @@ func (configs ConfigsModel) print() {
 }
 
 func (configs ConfigsModel) validate() error {
+	if err := input.ValidateWithOptions(configs.InstallDefaults, "Yes", "No"); err != nil {
+		return fmt.Errorf("issue with inpout InstallDefaults: %s", err)
+	}
+
 	if err := input.ValidateIfNotEmpty(configs.KeychainPath); err != nil {
 		return fmt.Errorf("issue with inpout KeychainPath: %s", err)
 	}
@@ -343,7 +350,7 @@ func main() {
 	// Collect Certificates
 	certificateURLPassphraseMap := map[string]string{}
 
-	if configs.CertificateURL != "" {
+	if configs.CertificateURL != "" && configs.InstallDefaults == "Yes" {
 		certificateURLs := splitAndTrimSpace(configs.CertificateURL, "|")
 
 		// Do not splitAndTrimSpace passphrases, since passphrase is may empty !!!
