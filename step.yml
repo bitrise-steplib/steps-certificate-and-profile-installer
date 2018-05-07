@@ -79,10 +79,9 @@ inputs:
   - install_defaults: "yes"
     opts:
       category: Default Codesign Files
-      summary: Should install the default Codesign Files?
-      title: Install default codesign files
-      description: |
-        You can turn off the default codesign files install.
+      summary: Installs default (Bitrise) Wildcard Codesign Files.
+      title: Installs default Codesign Files
+      description: Installs default (Bitrise) Wildcard Provisioning Profile and Codesign Certificate for testing.
       value_options:
       - "no"
       - "yes"
