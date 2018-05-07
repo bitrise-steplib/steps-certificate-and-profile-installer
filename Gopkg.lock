@@ -4,7 +4,16 @@
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-io/go-utils"
-  packages = ["colorstring","command","errorutil","fileutil","log","pathutil","pkcs12","pkcs12/internal/rc2"]
+  packages = [
+    "colorstring",
+    "command",
+    "errorutil",
+    "fileutil",
+    "log",
+    "pathutil",
+    "pkcs12",
+    "pkcs12/internal/rc2"
+  ]
   revision = "961320f9011cedf55e1da0578949bf63450a96c0"
 
 [[projects]]
@@ -16,7 +25,12 @@
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-tools/go-xcode"
-  packages = ["certificateutil","exportoptions","plistutil","profileutil"]
+  packages = [
+    "certificateutil",
+    "exportoptions",
+    "plistutil",
+    "profileutil"
+  ]
   revision = "c820668f24b67aa8cb58e687a87ec024fafbdf3b"
 
 [[projects]]
@@ -29,7 +43,7 @@
   branch = "master"
   name = "github.com/fullsailor/pkcs7"
   packages = ["."]
-  revision = "a009d8d7de53d9503c797cb8ec66fa3b21eed209"
+  revision = "ae226422660e5ca10db350d33f81c6608f3fbcdd"
 
 [[projects]]
   branch = "master"
@@ -52,7 +66,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
+  packages = [
+    "assert",
+    "require"
+  ]
   revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
 
 [[projects]]
