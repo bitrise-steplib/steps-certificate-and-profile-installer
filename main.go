@@ -125,16 +125,16 @@ func (configs ConfigsModel) print() {
 }
 
 func (configs ConfigsModel) validate() error {
-	if err := input.ValidateWithOptions(configs.InstallDefaults, "Yes", "No"); err != nil {
-		return fmt.Errorf("issue with inpout InstallDefaults: %s", err)
+	if err := input.ValidateWithOptions(configs.InstallDefaults, "yes", "no"); err != nil {
+		return fmt.Errorf("issue with input InstallDefaults: %s", err)
 	}
 
 	if err := input.ValidateIfNotEmpty(configs.KeychainPath); err != nil {
-		return fmt.Errorf("issue with inpout KeychainPath: %s", err)
+		return fmt.Errorf("issue with input KeychainPath: %s", err)
 	}
 
 	if err := input.ValidateIfNotEmpty(configs.KeychainPassword); err != nil {
-		return fmt.Errorf("issue with inpout KeychainPassword: %s", err)
+		return fmt.Errorf("issue with input KeychainPassword: %s", err)
 	}
 
 	return nil
@@ -350,7 +350,7 @@ func main() {
 	// Collect Certificates
 	certificateURLPassphraseMap := map[string]string{}
 
-	if configs.CertificateURL != "" && configs.InstallDefaults == "Yes" {
+	if configs.CertificateURL != "" {
 		certificateURLs := splitAndTrimSpace(configs.CertificateURL, "|")
 
 		// Do not splitAndTrimSpace passphrases, since passphrase is may empty !!!
@@ -368,7 +368,7 @@ func main() {
 		}
 	}
 
-	if configs.DefaultCertificateURL != "" {
+	if configs.DefaultCertificateURL != "" && configs.InstallDefaults == "yes" {
 		log.Printf("Default Certificate given")
 		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
 	}
@@ -383,7 +383,7 @@ func main() {
 	// Collect Provisioning Profiles
 	provisioningProfileURLs := splitAndTrimSpace(configs.ProvisioningProfileURL, "|")
 
-	if configs.DefaultProvisioningProfileURL != "" {
+	if configs.DefaultProvisioningProfileURL != "" && configs.InstallDefaults == "yes" {
 		log.Printf("Default Provisioning Profile given")
 		provisioningProfileURLs = append(provisioningProfileURLs, configs.DefaultProvisioningProfileURL)
 	}

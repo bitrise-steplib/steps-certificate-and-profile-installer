@@ -76,16 +76,16 @@ inputs:
     opts:
       title: Keychain's password
       is_required: true
-  - install_defaults: "Yes"
+  - install_defaults: "yes"
     opts:
       category: Default Codesign Files
-      summary: Should install the default Codesign Files
+      summary: Should install the default Codesign Files?
       title: Install default codesign files
       description: |
         You can turn off the default codesign files install.
       value_options:
-      - "No"
-      - "Yes"
+      - "no"
+      - "yes"
   - default_certificate_url: $BITRISE_DEFAULT_CERTIFICATE_URL
     opts:
       category: Default Codesign Files
