@@ -1,3 +1,4 @@
+
 title: Certificate and profile installer
 summary: |-
   Need to use your Provisioning Profiles and Certificates? Use this Step to
@@ -36,7 +37,6 @@ run_if: ".IsCI"
 inputs:
   - certificate_url: $BITRISE_CERTIFICATE_URL
     opts:
-      category: Config
       title: "Certificate URL"
       description: |
         URL of the certificate to download. Multiple URLs can be
@@ -46,7 +46,6 @@ inputs:
         Example: `file://./Cert.p12`
   - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE
     opts:
-      category: Config
       title: "Certificate passphrase"
       description: |
         Certificate passphrase. Multiple passphrases can be
@@ -62,7 +61,6 @@ inputs:
         - 3 certificates provided, only the 2. one has passphrase: `|PASS|`
   - provisioning_profile_url: $BITRISE_PROVISION_URL
     opts:
-      category: Config
       title: "Provisioning profile URL"
       description: |
         URL of the provisioning profile to download. Multiple URLs can be
@@ -72,17 +70,24 @@ inputs:
         Example: `file://./BuildAnything.mobileprovision`
   - keychain_path: $HOME/Library/Keychains/login.keychain
     opts:
-      category: Config
       title: Keychain Path
       is_required: true
   - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
     opts:
-      category: Config
       title: Keychain's password
       is_required: true
+  - install_defaults: "yes"
+    opts:
+      category: Default Codesign Files
+      summary: Installs default (Bitrise) Wildcard Codesign Files.
+      title: Installs default Codesign Files
+      description: Installs default (Bitrise) Wildcard Provisioning Profile and Codesign Certificate for testing.
+      value_options:
+      - "no"
+      - "yes"
   - default_certificate_url: $BITRISE_DEFAULT_CERTIFICATE_URL
     opts:
-      category: Debug
+      category: Default Codesign Files
       title: "Default Certificate URL"
       description: |
         URL of the default certificate.
@@ -91,13 +96,13 @@ inputs:
         Example: `file://./Cert.p12`
   - default_certificate_passphrase: $BITRISE_DEFAULT_CERTIFICATE_PASSPHRASE
     opts:
-      category: Debug
+      category: Default Codesign Files
       title: "Default Certificate passphrase"
       description: |
         Certificate passphrase of the default certificate.
   - default_provisioning_profile_url: $BITRISE_DEFAULT_PROVISION_URL
     opts:
-      category: Debug
+      category: Default Codesign Files
       title: "Default Provisioning profile URL"
       description: |
         URL of the default provisioning profile to download.

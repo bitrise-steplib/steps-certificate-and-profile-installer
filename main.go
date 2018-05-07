@@ -36,6 +36,7 @@ type ConfigsModel struct {
 	CertificatePassphrase  string
 	ProvisioningProfileURL string
 
+	InstallDefaults               string
 	DefaultCertificateURL         string
 	DefaultCertificatePassphrase  string
 	DefaultProvisioningProfileURL string
@@ -50,6 +51,7 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		CertificatePassphrase:  os.Getenv("certificate_passphrase"),
 		ProvisioningProfileURL: os.Getenv("provisioning_profile_url"),
 
+		InstallDefaults:               os.Getenv("install_defaults"),
 		DefaultCertificateURL:         os.Getenv("default_certificate_url"),
 		DefaultCertificatePassphrase:  os.Getenv("default_certificate_passphrase"),
 		DefaultProvisioningProfileURL: os.Getenv("default_provisioning_profile_url"),
@@ -113,6 +115,7 @@ func (configs ConfigsModel) print() {
 	log.Printf(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
 	log.Printf(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
 
+	log.Printf(" - InstallDefaults: %s", configs.InstallDefaults)
 	log.Printf(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
 	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
 	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
@@ -122,12 +125,16 @@ func (configs ConfigsModel) print() {
 }
 
 func (configs ConfigsModel) validate() error {
+	if err := input.ValidateWithOptions(configs.InstallDefaults, "yes", "no"); err != nil {
+		return fmt.Errorf("issue with input InstallDefaults: %s", err)
+	}
+
 	if err := input.ValidateIfNotEmpty(configs.KeychainPath); err != nil {
-		return fmt.Errorf("issue with inpout KeychainPath: %s", err)
+		return fmt.Errorf("issue with input KeychainPath: %s", err)
 	}
 
 	if err := input.ValidateIfNotEmpty(configs.KeychainPassword); err != nil {
-		return fmt.Errorf("issue with inpout KeychainPassword: %s", err)
+		return fmt.Errorf("issue with input KeychainPassword: %s", err)
 	}
 
 	return nil
@@ -361,7 +368,7 @@ func main() {
 		}
 	}
 
-	if configs.DefaultCertificateURL != "" {
+	if configs.DefaultCertificateURL != "" && configs.InstallDefaults == "yes" {
 		log.Printf("Default Certificate given")
 		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
 	}
@@ -376,7 +383,7 @@ func main() {
 	// Collect Provisioning Profiles
 	provisioningProfileURLs := splitAndTrimSpace(configs.ProvisioningProfileURL, "|")
 
-	if configs.DefaultProvisioningProfileURL != "" {
+	if configs.DefaultProvisioningProfileURL != "" && configs.InstallDefaults == "yes" {
 		log.Printf("Default Provisioning Profile given")
 		provisioningProfileURLs = append(provisioningProfileURLs, configs.DefaultProvisioningProfileURL)
 	}
