@@ -1,6 +1,15 @@
-## Changelog (Current version: 1.9.2)
+## Changelog (Current version: 1.9.3)
 
 -----------------
+
+### 1.9.3 (2018 May 07)
+
+* [202fd91] Prepare for 1.9.3
+* [44e3465] Input grouping fix (#47)
+* [b340432] PKCS7 dependency update (#48)
+* [bc28fbf] Revert "input groupin:"
+* [5416496] input groupin:  - install_defaults added;
+* [873c8a7] Updated dependencies (#46)
 
 ### 1.9.2 (2017 Oct 20)
 
@@ -199,4 +208,4 @@
 
 -----------------
 
-Updated: 2017 Oct 20
+Updated: 2018 May 07
