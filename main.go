@@ -284,10 +284,10 @@ func printProfileInfo(info profileutil.ProvisioningProfileInfoModel, installedCe
 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
 	log.Printf("bundleID: %s", info.BundleID)
 
-	capabitlities := collectCapabilities(info.Entitlements)
-	if len(capabitlities) > 0 {
-		log.Printf("capabitlities:")
-		for key, value := range capabitlities {
+	capabilities := collectCapabilities(info.Entitlements)
+	if len(capabilities) > 0 {
+		log.Printf("capabilities:")
+		for key, value := range capabilities {
 			log.Printf("- %s: %v", key, value)
 		}
 	}
