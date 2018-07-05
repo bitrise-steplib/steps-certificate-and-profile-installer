@@ -8,7 +8,7 @@
 
 [[constraint]]
   name = "github.com/bitrise-tools/go-xcode"
-  revision = "77d8b65b1a146fd3ab0ac610068cea17b57103eb"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/hashicorp/go-version"

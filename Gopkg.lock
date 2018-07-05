@@ -23,6 +23,7 @@
   revision = "a848c9870ff7d745a8fb2a951e1c81fcb147b4ec"
 
 [[projects]]
+  branch = "master"
   name = "github.com/bitrise-tools/go-xcode"
   packages = [
     "certificateutil",
@@ -80,6 +81,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3f5b72e385f96ba2f25bf7d507883d9ceaf3e60537d7ded60e8cdd8861cbde56"
+  inputs-digest = "477c857aeb04ae7961e915fb661b78f0013fbfdfdacc9882b0ce79cc2a6c720a"
   solver-name = "gps-cdcl"
   solver-version = 1
