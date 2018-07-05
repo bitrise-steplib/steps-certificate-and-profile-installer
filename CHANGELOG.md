@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.9.3)
+## Changelog (Current version: 1.10.0)
 
 -----------------
+
+### 1.10.0 (2018 Jul 05)
+
+* [528f9c6] Prepare for 1.10.0
+* [f671800] TvOS Xcode managed provisioning profiles (#50)
+* [52db0b4] Switch summary and description (#49)
 
 ### 1.9.3 (2018 May 07)
 
@@ -208,4 +214,4 @@
 
 -----------------
 
-Updated: 2018 May 07
+Updated: 2018 Jul 05
