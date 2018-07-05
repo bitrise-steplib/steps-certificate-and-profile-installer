@@ -31,7 +31,7 @@
     "plistutil",
     "profileutil"
   ]
-  revision = "c820668f24b67aa8cb58e687a87ec024fafbdf3b"
+  revision = "77d8b65b1a146fd3ab0ac610068cea17b57103eb"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -49,7 +49,7 @@
   branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
+  revision = "23480c0665776210b5fbbac6eaaee40e3e6a96b7"
 
 [[projects]]
   branch = "master"
