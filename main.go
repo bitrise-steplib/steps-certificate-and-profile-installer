@@ -267,10 +267,10 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	}
 }
 
-func collectCapabilities(entitlements plistutil.PlistData) map[string]interface{} {
+func collectCapabilities(profileType profileutil.ProfileType, entitlements plistutil.PlistData) map[string]interface{} {
 	capabilities := map[string]interface{}{}
 	for key, value := range entitlements {
-		found := profileutil.KnownProfileCapabilitiesMap[key]
+		found := profileutil.KnownProfileCapabilitiesMap[profileType][key]
 		if found {
 			capabilities[key] = value
 		}
@@ -278,13 +278,13 @@ func collectCapabilities(entitlements plistutil.PlistData) map[string]interface{
 	return capabilities
 }
 
-func printProfileInfo(info profileutil.ProvisioningProfileInfoModel, installedCertificates []certificateutil.CertificateInfoModel) {
+func printProfileInfo(profileType profileutil.ProfileType, info profileutil.ProvisioningProfileInfoModel, installedCertificates []certificateutil.CertificateInfoModel) {
 	log.Donef("%s (%s)", info.Name, info.UUID)
 	log.Printf("exportType: %s", string(info.ExportType))
 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
 	log.Printf("bundleID: %s", info.BundleID)
 
-	capabilities := collectCapabilities(info.Entitlements)
+	capabilities := collectCapabilities(profileType, info.Entitlements)
 	if len(capabilities) > 0 {
 		log.Printf("capabilities:")
 		for key, value := range capabilities {
@@ -553,8 +553,10 @@ func main() {
 		log.Printf("Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
 		provisioningProfileExt := "provisionprofile"
+		profileType := profileutil.ProfileTypeMacOs
 		if !strings.Contains(profileURL, "."+provisioningProfileExt) {
 			provisioningProfileExt = "mobileprovision"
+			profileType = profileutil.ProfileTypeIos
 		}
 
 		profileTmpPth := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
@@ -576,6 +578,6 @@ func main() {
 		}
 
 		fmt.Println()
-		printProfileInfo(profile, installedCertificates)
+		printProfileInfo(profileType, profile, installedCertificates)
 	}
 }
