@@ -59,6 +59,7 @@ inputs:
         - 1 certificate provided without passphrase: ``
         - 3 certificates provided, none of them has passphrase: `||`
         - 3 certificates provided, only the 2. one has passphrase: `|PASS|`
+      is_sensitive: true
   - provisioning_profile_url: $BITRISE_PROVISION_URL
     opts:
       title: "Provisioning profile URL"
