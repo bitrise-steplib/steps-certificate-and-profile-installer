@@ -44,6 +44,7 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         For example `file://./Cert.p12`
+      is_sensitive: true
   - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE
     opts:
       title: "Certificate passphrase"
@@ -69,6 +70,7 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         For example `file://./BuildAnything.mobileprovision`
+      is_sensitive: true
   - keychain_path: $HOME/Library/Keychains/login.keychain
     opts:
       title: Keychain Path
