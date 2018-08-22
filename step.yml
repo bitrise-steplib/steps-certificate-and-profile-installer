@@ -44,6 +44,7 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         For example `file://./Cert.p12`
+      is_sensitive: true
   - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE
     opts:
       title: "Certificate passphrase"
@@ -59,6 +60,7 @@ inputs:
         - 1 certificate provided without passphrase: ``
         - 3 certificates provided, none of them has passphrase: `||`
         - 3 certificates provided, only the 2. one has passphrase: `|PASS|`
+      is_sensitive: true
   - provisioning_profile_url: $BITRISE_PROVISION_URL
     opts:
       title: "Provisioning profile URL"
@@ -68,6 +70,7 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         For example `file://./BuildAnything.mobileprovision`
+      is_sensitive: true
   - keychain_path: $HOME/Library/Keychains/login.keychain
     opts:
       title: Keychain Path
@@ -76,6 +79,7 @@ inputs:
     opts:
       title: Keychain's password
       is_required: true
+      is_sensitive: true
   - install_defaults: "yes"
     opts:
       category: Default Codesign Files
@@ -94,12 +98,14 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         For example `file://./Cert.p12`
+      is_sensitive: true
   - default_certificate_passphrase: $BITRISE_DEFAULT_CERTIFICATE_PASSPHRASE
     opts:
       category: Default Codesign Files
       title: "Default Certificate passphrase"
       description: |
         Certificate passphrase of the default certificate.
+      is_sensitive: true
   - default_provisioning_profile_url: $BITRISE_DEFAULT_PROVISION_URL
     opts:
       category: Default Codesign Files
@@ -109,3 +115,4 @@ inputs:
 
         You can specify a local path as well, using the `file://` scheme.
         For example `file://./BuildAnything.mobileprovision`
+      is_sensitive: true
