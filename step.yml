@@ -7,9 +7,9 @@ description: |-
   add them to the keychain and use it as you wish! No worries, as our security
   policy goes, the VM is reverted after running the workflow so there's no
   trace of these left on them.
-website: https://github.com/bitrise-io/steps-certificate-and-profile-installer
-source_code_url: https://github.com/bitrise-io/steps-certificate-and-profile-installer
-support_url: https://github.com/bitrise-io/steps-certificate-and-profile-installer/issues
+website: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer
+source_code_url: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer
+support_url: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer/issues
 host_os_tags:
   - "osx-10.10"
 project_type_tags:
@@ -19,6 +19,7 @@ project_type_tags:
   - cordova
   - ionic
   - react-native
+  - flutter
 type_tags:
   - code-sign
 is_requires_admin_user: false
@@ -32,7 +33,7 @@ deps:
     bin_name: go
 toolkit:
   go:
-    package_name: github.com/bitrise-io/steps-certificate-and-profile-installer
+    package_name: github.com/bitrise-steplib/steps-certificate-and-profile-installer
 run_if: ".IsCI"
 inputs:
   - certificate_url: $BITRISE_CERTIFICATE_URL

@@ -11,13 +11,13 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/bitrise-io/go-steputils/input"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-tools/go-steputils/input"
-	"github.com/bitrise-tools/go-xcode/certificateutil"
-	"github.com/bitrise-tools/go-xcode/plistutil"
-	"github.com/bitrise-tools/go-xcode/profileutil"
+	"github.com/bitrise-io/go-xcode/certificateutil"
+	"github.com/bitrise-io/go-xcode/plistutil"
+	"github.com/bitrise-io/go-xcode/profileutil"
 	version "github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
@@ -463,7 +463,7 @@ func main() {
 	installedCertificates := []certificateutil.CertificateInfoModel{}
 
 	for cert, pass := range certificatePassphraseMap {
-		certInfos, err := certificateutil.NewCertificateInfosFromPKCS12(cert, pass)
+		certInfos, err := certificateutil.CertificatesFromPKCS12File(cert, pass)
 		if err != nil {
 			failF("Failed to parse certificate, error: %s", err)
 		}
