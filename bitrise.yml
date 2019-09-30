@@ -21,10 +21,6 @@ workflows:
     - errcheck:
     - go-test:
     steps:
-    - script:
-        title: Step audit
-        inputs:
-        - content: stepman audit --step-yml=./step.yml
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         description: |-
