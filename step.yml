@@ -24,13 +24,13 @@ description: |-
   - Make sure you uploaded the required code signing files.
 
   ### Useful links
-  [iOS code signing](https://devcenter.bitrise.io/code-signing/ios-code-signing/code-signing-index/)
-  [iOS deployment](https://devcenter.bitrise.io/deploy/ios-deploy/ios-deploy-index/)
+  - [iOS code signing](https://devcenter.bitrise.io/code-signing/ios-code-signing/code-signing-index/)
+  - [iOS deployment](https://devcenter.bitrise.io/deploy/ios-deploy/ios-deploy-index/)
 
   ### Related Steps
-  [iOS Auto Provision](https://www.bitrise.io/integrations/steps/ios-auto-provision)
-  [Xcode Archive & Export for iOS](https://www.bitrise.io/integrations/steps/xcode-archive)
-  [Deploy to iTunesConnect](https://www.bitrise.io/integrations/steps/deploy-to-itunesconnect-deliver)
+  - [iOS Auto Provision](https://www.bitrise.io/integrations/steps/ios-auto-provision)
+  - [Xcode Archive & Export for iOS](https://www.bitrise.io/integrations/steps/xcode-archive)
+  - [Deploy to iTunesConnect](https://www.bitrise.io/integrations/steps/deploy-to-itunesconnect-deliver)
 
 website: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer
 source_code_url: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer
