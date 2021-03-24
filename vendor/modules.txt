@@ -1,0 +1,44 @@
+# github.com/bitrise-io/go-steputils v0.0.0-20190806143347-f540824d77df
+## explicit
+github.com/bitrise-io/go-steputils/input
+# github.com/bitrise-io/go-utils v0.0.0-20190814105345-ad86bf775472
+## explicit
+github.com/bitrise-io/go-utils/colorstring
+github.com/bitrise-io/go-utils/command
+github.com/bitrise-io/go-utils/errorutil
+github.com/bitrise-io/go-utils/fileutil
+github.com/bitrise-io/go-utils/log
+github.com/bitrise-io/go-utils/pathutil
+github.com/bitrise-io/go-utils/pkcs12
+github.com/bitrise-io/go-utils/pkcs12/internal/rc2
+# github.com/bitrise-io/go-xcode v0.0.0-20190718082554-07ccf582b6b1
+## explicit
+github.com/bitrise-io/go-xcode/certificateutil
+github.com/bitrise-io/go-xcode/exportoptions
+github.com/bitrise-io/go-xcode/models
+github.com/bitrise-io/go-xcode/plistutil
+github.com/bitrise-io/go-xcode/profileutil
+github.com/bitrise-io/go-xcode/utility
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
+## explicit
+github.com/fullsailor/pkcs7
+# github.com/hashicorp/go-version v1.2.1-0.20190424083514-192140e6f3e6
+## explicit
+github.com/hashicorp/go-version
+# github.com/pkg/errors v0.8.2-0.20190227000051-27936f6d90f9
+## explicit
+github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/stretchr/testify v1.4.1-0.20190904163530-85f2b59c4459
+## explicit
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# gopkg.in/yaml.v2 v2.2.2
+gopkg.in/yaml.v2
+# howett.net/plist v0.0.0-20181124034731-591f970eefbb
+## explicit
+howett.net/plist
