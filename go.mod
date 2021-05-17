@@ -1,4 +1,4 @@
-module bitrise-steplib/steps-certificate-and-profile-installer
+module github.com/bitrise-steplib/steps-certificate-and-profile-installer
 
 go 1.15
 
