@@ -2,27 +2,16 @@ format_version: "11"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 workflows:
-  check:
-    steps:
-      - git::https://github.com/bitrise-steplib/steps-check.git: { }
-
-  e2e:
-    steps:
-      - git::https://github.com/bitrise-steplib/steps-check.git:
-          inputs:
-            - workflow: e2e
-
-  ci:
-    after_run:
-      - check
-      - e2e
-
-  sample:
+  test_certificate_profile_installer:
     envs:
       - BITRISE_CERTIFICATE_URL_LIST: $BITRISE_CERTIFICATE_URL_LIST
       - BITRISE_CERTIFICATE_PASSPHRASE_LIST: $BITRISE_CERTIFICATE_PASSPHRASE_LIST
       - BITRISE_PROVISIONING_PROFILE_URL_LIST: $BITRISE_PROVISIONING_PROFILE_URL_LIST
       - BITRISE_KEYCHAIN_PASSWORD: $BITRISE_KEYCHAIN_PASSWORD
+    after_run:
+      - _run
+
+  _run:
     steps:
       - change-workdir:
           title: Switch working dir to test / _tmp dir
