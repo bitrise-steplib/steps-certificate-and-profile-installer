@@ -36,3 +36,7 @@ workflows:
             - provisioning_profile_url: $BITRISE_PROVISIONING_PROFILE_URL_LIST
             - keychain_path: $HOME/Library/Keychains/login.keychain
             - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
+
+  generate-readme:
+    steps:
+    - git::https://github.com/bitrise-steplib/steps-readme-generator.git@main:
