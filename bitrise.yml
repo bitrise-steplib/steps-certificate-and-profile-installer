@@ -37,6 +37,6 @@ workflows:
             - keychain_path: $HOME/Library/Keychains/login.keychain
             - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
 
-  generate-readme:
+  generate_readme:
     steps:
     - git::https://github.com/bitrise-steplib/steps-readme-generator.git@main:
