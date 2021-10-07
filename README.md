@@ -1,4 +1,5 @@
 # Certificate and profile installer
+![logo](https://github.com/idivyanshbansal/steps-certificate-and-profile-installer/blob/9a338215422679484d2f2dc3447021d2b102f4c8/bitrise.png)
 
 [![Step changelog](https://shields.io/github/v/release/bitrise-steplib/steps-certificate-and-profile-installer?include_prereleases&label=changelog&color=blueviolet)](https://github.com/bitrise-steplib/steps-certificate-and-profile-installer/releases)
 
