@@ -22,10 +22,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
-)
-
 // -----------------------
 // --- Models
 // -----------------------
@@ -75,7 +71,7 @@ func secureInput(str string) string {
 			show = 1
 		}
 
-		sec := fmt.Sprintf("%s%s%s", s[0:show], strings.Repeat("*", 3), s[len(s)-show:len(s)])
+		sec := fmt.Sprintf("%s%s%s", s[0:show], strings.Repeat("*", 3), s[len(s)-show:])
 		return sec
 	}
 
@@ -246,7 +242,7 @@ func appendWithoutDuplicatesAndKeepOrder(items []string, item string) []string {
 
 	list := append(items, item)
 	for _, i := range list {
-		exist, _ := resultMap[i]
+		exist := resultMap[i]
 		if !exist {
 			result = append(result, i)
 			resultMap[i] = true
