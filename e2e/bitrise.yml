@@ -4,29 +4,29 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 workflows:
   test_certificate_profile_installer:
     envs:
-      - BITRISE_CERTIFICATE_URL_LIST: $BITRISE_CERTIFICATE_URL_LIST
-      - BITRISE_CERTIFICATE_PASSPHRASE_LIST: $BITRISE_CERTIFICATE_PASSPHRASE_LIST
-      - BITRISE_PROVISIONING_PROFILE_URL_LIST: $BITRISE_PROVISIONING_PROFILE_URL_LIST
-      - BITRISE_KEYCHAIN_PASSWORD: $BITRISE_KEYCHAIN_PASSWORD
+    - BITRISE_CERTIFICATE_URL_LIST: $BITRISE_CERTIFICATE_URL_LIST
+    - BITRISE_CERTIFICATE_PASSPHRASE_LIST: $BITRISE_CERTIFICATE_PASSPHRASE_LIST
+    - BITRISE_PROVISIONING_PROFILE_URL_LIST: $BITRISE_PROVISIONING_PROFILE_URL_LIST
+    - BITRISE_KEYCHAIN_PASSWORD: $BITRISE_KEYCHAIN_PASSWORD
     after_run:
-      - _run
+    - _run
 
   _run:
     steps:
-      - change-workdir:
-          title: Switch working dir to test / _tmp dir
-          description: |-
-            To prevent step testing issues, like referencing relative
-            files with just './some-file' in the step's code, which would
-            work for testing the step from this directory directly
-            but would break if the step is included in another `bitrise.yml`.
-          inputs:
-            - path: ./_tmp
-            - is_create_path: true
-      - path::./:
-          inputs:
-            - certificate_url: $BITRISE_CERTIFICATE_URL_LIST
-            - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE_LIST
-            - provisioning_profile_url: $BITRISE_PROVISIONING_PROFILE_URL_LIST
-            - keychain_path: $HOME/Library/Keychains/login.keychain
-            - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
+    - change-workdir:
+        title: Switch working dir to test / _tmp dir
+        description: |-
+          To prevent step testing issues, like referencing relative
+          files with just './some-file' in the step's code, which would
+          work for testing the step from this directory directly
+          but would break if the step is included in another `bitrise.yml`.
+        inputs:
+        - path: ./_tmp
+        - is_create_path: true
+    - path::./:
+        inputs:
+        - certificate_url: $BITRISE_CERTIFICATE_URL_LIST
+        - certificate_passphrase: $BITRISE_CERTIFICATE_PASSPHRASE_LIST
+        - provisioning_profile_url: $BITRISE_PROVISIONING_PROFILE_URL_LIST
+        - keychain_path: $HOME/Library/Keychains/login.keychain
+        - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
