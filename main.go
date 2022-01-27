@@ -539,12 +539,6 @@ func main() {
 		failE(commandError(cmd.PrintableCommandArgs(), out, err))
 	}
 
-	// Unlock the specified keychain
-	cmd = command.New("security", "-v", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
 	//
 	// Install provisioning profiles
 	fmt.Println()
