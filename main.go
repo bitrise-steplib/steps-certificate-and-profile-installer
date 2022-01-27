@@ -470,8 +470,14 @@ func main() {
 		}
 		fmt.Println()
 
+		// Unlock keychain (if locked)
+		cmd := command.New("security", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
+		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+			failE(commandError(cmd.PrintableCommandArgs(), out, err))
+		}
+
 		// Import items into a keychain.
-		cmd := command.New("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
+		cmd = command.New("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
 		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 			failE(commandError(cmd.PrintableCommandArgs(), out, err))
 		}
@@ -529,12 +535,6 @@ func main() {
 
 	// Set the default keychain
 	cmd = command.New("security", "-v", "default-keychain", "-s", configs.KeychainPath)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	// Unlock the specified keychain
-	cmd = command.New("security", "-v", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		failE(commandError(cmd.PrintableCommandArgs(), out, err))
 	}
