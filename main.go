@@ -343,7 +343,8 @@ func main() {
 		if len(certificateURLs) != len(certificatePassphrases) {
 			failF(
 				"Certificate URL count: (%d), is not equal to Certificate passphrase count: (%d).\n"+
-					"This could be because one of your passphrases contains a pipe symbol (\"|\") which is forbidden.",
+					"This could be because one of your passphrases contains a pipe character (\"|\") " +
+					"which is not supported, as it is used as the delimiter in the step input.",
 				len(certificateURLs),
 				len(certificatePassphrases),
 			)

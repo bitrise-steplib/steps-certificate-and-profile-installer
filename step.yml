@@ -75,9 +75,10 @@ inputs:
     title: Certificate passphrase
     description: |
       Certificate passphrase. Multiple passphrases can be
-      specified, separated by a pipe (`|`) character.
+      specified, separated by a pipe character (`|`).
 
       Specified Certificate passphrase count should match the count of the certificate urls.
+      Pipe characters in passphrases are not supported.
 
       Format example:
 

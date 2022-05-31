@@ -11,7 +11,7 @@ workflows:
     after_run:
     - _run
 
-  test_certificate_url_and_passphrase_not_equal:
+  test_certificate_url_and_passphrase_count_not_equal:
     steps:
     - script:
         title: Test if the step fails when the Certificate URL count is not equal to Certificate passphrase count
@@ -25,7 +25,7 @@ workflows:
               exit 1
             fi
 
-  utility_certificate_url_and_passphrase_not_equal:
+  utility_certificate_url_and_passphrase_count_not_equal:
     envs:
     - BITRISE_CERTIFICATE_URL_LIST: https://example.com|https://example.com|https://example.com
     - BITRISE_CERTIFICATE_PASSPHRASE_LIST: test|test|test|test
