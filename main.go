@@ -22,10 +22,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// -----------------------
-// --- Models
-// -----------------------
-
 // Config ...
 type Config struct {
 	CertificateURL         string
@@ -41,7 +37,7 @@ type Config struct {
 	KeychainPassword string
 }
 
-func createConfigsModelFromEnvs() Config {
+func createConfigFromEnvs() Config {
 	return Config{
 		CertificateURL:         os.Getenv("certificate_url"),
 		CertificatePassphrase:  os.Getenv("certificate_passphrase"),
@@ -135,10 +131,6 @@ func (c Config) validate() error {
 
 	return nil
 }
-
-//--------------------
-// Functions
-//--------------------
 
 func downloadFile(destionationPath, URL string) error {
 	url, err := url.Parse(URL)
@@ -331,12 +323,8 @@ func failE(err error) {
 	os.Exit(1)
 }
 
-//--------------------
-// Main
-//--------------------
-
 func main() {
-	configs := createConfigsModelFromEnvs()
+	configs := createConfigFromEnvs()
 	configs.print()
 	if err := configs.validate(); err != nil {
 		failF("Issue with input: %s", err)
@@ -349,7 +337,7 @@ func main() {
 	if configs.CertificateURL != "" {
 		certificateURLs := splitAndTrimSpace(configs.CertificateURL, "|")
 
-		// Do not splitAndTrimSpace passphrases, since passphrase is may empty !!!
+		// Do not splitAndTrimSpace passphrases, since a passphrase might be empty!
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
