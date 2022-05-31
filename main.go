@@ -26,8 +26,8 @@ import (
 // --- Models
 // -----------------------
 
-// ConfigsModel ...
-type ConfigsModel struct {
+// Config ...
+type Config struct {
 	CertificateURL         string
 	CertificatePassphrase  string
 	ProvisioningProfileURL string
@@ -41,8 +41,8 @@ type ConfigsModel struct {
 	KeychainPassword string
 }
 
-func createConfigsModelFromEnvs() ConfigsModel {
-	return ConfigsModel{
+func createConfigsModelFromEnvs() Config {
+	return Config{
 		CertificateURL:         os.Getenv("certificate_url"),
 		CertificatePassphrase:  os.Getenv("certificate_passphrase"),
 		ProvisioningProfileURL: os.Getenv("provisioning_profile_url"),
@@ -104,7 +104,7 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func (configs ConfigsModel) print() {
+func (configs Config) print() {
 	fmt.Println()
 	log.Infof("Configs:")
 	log.Printf(" - CertificateURL: %s", secureInput(configs.CertificateURL))
@@ -120,7 +120,7 @@ func (configs ConfigsModel) print() {
 	log.Printf(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
 }
 
-func (configs ConfigsModel) validate() error {
+func (configs Config) validate() error {
 	if err := input.ValidateWithOptions(configs.InstallDefaults, "yes", "no"); err != nil {
 		return fmt.Errorf("issue with input InstallDefaults: %s", err)
 	}
