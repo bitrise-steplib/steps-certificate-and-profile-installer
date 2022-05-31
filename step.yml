@@ -100,12 +100,12 @@ inputs:
 - keychain_path: $HOME/Library/Keychains/login.keychain
   opts:
     title: Keychain Path
-    summary: Path to the Keychain.
+    summary: Path to the Keychain where the code signing certificates will be installed.
     is_required: true
 - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
   opts:
     title: Keychain password
-    summary: Password of the Keychain.
+    summary: Password for the provided Keychain.
     is_required: true
     is_sensitive: true
 - install_defaults: "yes"
