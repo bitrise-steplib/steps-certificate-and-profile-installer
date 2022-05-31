@@ -341,7 +341,12 @@ func main() {
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
-			failF("Certificate url count: (%d), not equals to Certificate Passphrase count: (%d)", len(certificateURLs), len(certificatePassphrases))
+			failF(
+				"Certificate URL count: (%d), is not equal to Certificate passphrase count: (%d).\n"+
+					"This could be because one of your passphrases contains a pipe symbol (\"|\") which is forbidden.",
+				len(certificateURLs),
+				len(certificatePassphrases),
+			)
 		}
 
 		for i := 0; i < len(certificateURLs); i++ {
