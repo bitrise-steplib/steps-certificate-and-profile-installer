@@ -22,12 +22,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// -----------------------
-// --- Models
-// -----------------------
-
-// ConfigsModel ...
-type ConfigsModel struct {
+// Config ...
+type Config struct {
 	CertificateURL         string
 	CertificatePassphrase  string
 	ProvisioningProfileURL string
@@ -41,8 +37,8 @@ type ConfigsModel struct {
 	KeychainPassword string
 }
 
-func createConfigsModelFromEnvs() ConfigsModel {
-	return ConfigsModel{
+func createConfigFromEnvs() Config {
+	return Config{
 		CertificateURL:         os.Getenv("certificate_url"),
 		CertificatePassphrase:  os.Getenv("certificate_passphrase"),
 		ProvisioningProfileURL: os.Getenv("provisioning_profile_url"),
@@ -104,41 +100,37 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func (configs ConfigsModel) print() {
+func (c Config) print() {
 	fmt.Println()
 	log.Infof("Configs:")
-	log.Printf(" - CertificateURL: %s", secureInput(configs.CertificateURL))
-	log.Printf(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
-	log.Printf(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
+	log.Printf(" - CertificateURL: %s", secureInput(c.CertificateURL))
+	log.Printf(" - CertificatePassphrase: %s", secureInput(c.CertificatePassphrase))
+	log.Printf(" - ProvisioningProfileURL: %s", secureInput(c.ProvisioningProfileURL))
 
-	log.Printf(" - InstallDefaults: %s", configs.InstallDefaults)
-	log.Printf(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
-	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
-	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
+	log.Printf(" - InstallDefaults: %s", c.InstallDefaults)
+	log.Printf(" - DefaultCertificateURL: %s", secureInput(c.DefaultCertificateURL))
+	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(c.DefaultCertificatePassphrase))
+	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(c.DefaultProvisioningProfileURL))
 
-	log.Printf(" - KeychainPath: %s", configs.KeychainPath)
-	log.Printf(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
+	log.Printf(" - KeychainPath: %s", c.KeychainPath)
+	log.Printf(" - KeychainPassword: %s", secureInput(c.KeychainPassword))
 }
 
-func (configs ConfigsModel) validate() error {
-	if err := input.ValidateWithOptions(configs.InstallDefaults, "yes", "no"); err != nil {
+func (c Config) validate() error {
+	if err := input.ValidateWithOptions(c.InstallDefaults, "yes", "no"); err != nil {
 		return fmt.Errorf("issue with input InstallDefaults: %s", err)
 	}
 
-	if err := input.ValidateIfNotEmpty(configs.KeychainPath); err != nil {
+	if err := input.ValidateIfNotEmpty(c.KeychainPath); err != nil {
 		return fmt.Errorf("issue with input KeychainPath: %s", err)
 	}
 
-	if err := input.ValidateIfNotEmpty(configs.KeychainPassword); err != nil {
+	if err := input.ValidateIfNotEmpty(c.KeychainPassword); err != nil {
 		return fmt.Errorf("issue with input KeychainPassword: %s", err)
 	}
 
 	return nil
 }
-
-//--------------------
-// Functions
-//--------------------
 
 func downloadFile(destionationPath, URL string) error {
 	url, err := url.Parse(URL)
@@ -331,12 +323,8 @@ func failE(err error) {
 	os.Exit(1)
 }
 
-//--------------------
-// Main
-//--------------------
-
 func main() {
-	configs := createConfigsModelFromEnvs()
+	configs := createConfigFromEnvs()
 	configs.print()
 	if err := configs.validate(); err != nil {
 		failF("Issue with input: %s", err)
@@ -349,11 +337,17 @@ func main() {
 	if configs.CertificateURL != "" {
 		certificateURLs := splitAndTrimSpace(configs.CertificateURL, "|")
 
-		// Do not splitAndTrimSpace passphrases, since passphrase is may empty !!!
+		// Do not splitAndTrimSpace passphrases, since a passphrase might be empty!
 		certificatePassphrases := strings.Split(configs.CertificatePassphrase, "|")
 
 		if len(certificateURLs) != len(certificatePassphrases) {
-			failF("Certificate url count: (%d), not equals to Certificate Passphrase count: (%d)", len(certificateURLs), len(certificatePassphrases))
+			failF(
+				"Certificate URL count: (%d), is not equal to Certificate passphrase count: (%d).\n"+
+					"This could be because one of your passphrases contains a pipe character (\"|\") " +
+					"which is not supported, as it is used as the delimiter in the step input.",
+				len(certificateURLs),
+				len(certificatePassphrases),
+			)
 		}
 
 		for i := 0; i < len(certificateURLs); i++ {

@@ -75,9 +75,10 @@ inputs:
     title: Certificate passphrase
     description: |
       Certificate passphrase. Multiple passphrases can be
-      specified, separated by a pipe (`|`) character.
+      specified, separated by a pipe character (`|`).
 
       Specified Certificate passphrase count should match the count of the certificate urls.
+      Pipe characters in passphrases are not supported.
 
       Format example:
 
@@ -99,10 +100,12 @@ inputs:
 - keychain_path: $HOME/Library/Keychains/login.keychain
   opts:
     title: Keychain Path
+    summary: Path to the Keychain where the code signing certificates will be installed.
     is_required: true
 - keychain_password: $BITRISE_KEYCHAIN_PASSWORD
   opts:
-    title: Keychain's password
+    title: Keychain password
+    summary: Password for the provided Keychain.
     is_required: true
     is_sensitive: true
 - install_defaults: "yes"
@@ -129,7 +132,7 @@ inputs:
     category: Default Codesign Files
     title: Default Certificate passphrase
     description: |
-      Certificate passphrase of the default certificate.
+      Passphrase of the default Certificate.
     is_sensitive: true
 - default_provisioning_profile_url: $BITRISE_DEFAULT_PROVISION_URL
   opts:
