@@ -104,32 +104,32 @@ func secureInput(str string) string {
 	return prefix + sec
 }
 
-func (configs Config) print() {
+func (c Config) print() {
 	fmt.Println()
 	log.Infof("Configs:")
-	log.Printf(" - CertificateURL: %s", secureInput(configs.CertificateURL))
-	log.Printf(" - CertificatePassphrase: %s", secureInput(configs.CertificatePassphrase))
-	log.Printf(" - ProvisioningProfileURL: %s", secureInput(configs.ProvisioningProfileURL))
+	log.Printf(" - CertificateURL: %s", secureInput(c.CertificateURL))
+	log.Printf(" - CertificatePassphrase: %s", secureInput(c.CertificatePassphrase))
+	log.Printf(" - ProvisioningProfileURL: %s", secureInput(c.ProvisioningProfileURL))
 
-	log.Printf(" - InstallDefaults: %s", configs.InstallDefaults)
-	log.Printf(" - DefaultCertificateURL: %s", secureInput(configs.DefaultCertificateURL))
-	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(configs.DefaultCertificatePassphrase))
-	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(configs.DefaultProvisioningProfileURL))
+	log.Printf(" - InstallDefaults: %s", c.InstallDefaults)
+	log.Printf(" - DefaultCertificateURL: %s", secureInput(c.DefaultCertificateURL))
+	log.Printf(" - DefaultCertificatePassphrase: %s", secureInput(c.DefaultCertificatePassphrase))
+	log.Printf(" - DefaultProvisioningProfileURL: %s", secureInput(c.DefaultProvisioningProfileURL))
 
-	log.Printf(" - KeychainPath: %s", configs.KeychainPath)
-	log.Printf(" - KeychainPassword: %s", secureInput(configs.KeychainPassword))
+	log.Printf(" - KeychainPath: %s", c.KeychainPath)
+	log.Printf(" - KeychainPassword: %s", secureInput(c.KeychainPassword))
 }
 
-func (configs Config) validate() error {
-	if err := input.ValidateWithOptions(configs.InstallDefaults, "yes", "no"); err != nil {
+func (c Config) validate() error {
+	if err := input.ValidateWithOptions(c.InstallDefaults, "yes", "no"); err != nil {
 		return fmt.Errorf("issue with input InstallDefaults: %s", err)
 	}
 
-	if err := input.ValidateIfNotEmpty(configs.KeychainPath); err != nil {
+	if err := input.ValidateIfNotEmpty(c.KeychainPath); err != nil {
 		return fmt.Errorf("issue with input KeychainPath: %s", err)
 	}
 
-	if err := input.ValidateIfNotEmpty(configs.KeychainPassword); err != nil {
+	if err := input.ValidateIfNotEmpty(c.KeychainPassword); err != nil {
 		return fmt.Errorf("issue with input KeychainPassword: %s", err)
 	}
 
