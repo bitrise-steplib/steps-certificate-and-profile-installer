@@ -432,8 +432,6 @@ func main() {
 		fmt.Println()
 	}
 
-	//
-	// Install provisioning profiles
 	fmt.Println()
 	log.Infof("Downloading Provisioning Profile(s)...")
 

@@ -34,9 +34,12 @@ github.com/bitrise-io/go-xcode/xcodeproject/serialized
 ## explicit
 github.com/bitrise-io/go-xcode/v2/autocodesign
 github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader
+github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset
 github.com/bitrise-io/go-xcode/v2/autocodesign/devportalclient/appstoreconnect
 github.com/bitrise-io/go-xcode/v2/autocodesign/devportalclient/time
 github.com/bitrise-io/go-xcode/v2/autocodesign/keychain
+github.com/bitrise-io/go-xcode/v2/autocodesign/localcodesignasset
+github.com/bitrise-io/go-xcode/v2/autocodesign/profiledownloader
 # github.com/bitrise-io/pkcs12 v0.0.0-20211108084543-e52728e011c8
 github.com/bitrise-io/pkcs12
 github.com/bitrise-io/pkcs12/internal/rc2
