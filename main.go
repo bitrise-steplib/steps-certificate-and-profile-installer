@@ -249,16 +249,16 @@ func appendWithoutDuplicatesAndKeepOrder(items []string, item string) []string {
 	return result
 }
 
-func printCertificateInfo(info certificateutil.CertificateInfoModel) {
-	log.Donef(info.CommonName)
-	log.Printf("serial: %s", info.Serial)
-	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
-	log.Printf("expire: %s", info.EndDate)
+// func printCertificateInfo(info certificateutil.CertificateInfoModel) {
+// 	log.Donef(info.CommonName)
+// 	log.Printf("serial: %s", info.Serial)
+// 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
+// 	log.Printf("expire: %s", info.EndDate)
 
-	if err := info.CheckValidity(); err != nil {
-		log.Errorf("[X] %s", err)
-	}
-}
+// 	if err := info.CheckValidity(); err != nil {
+// 		log.Errorf("[X] %s", err)
+// 	}
+// }
 
 func collectCapabilities(profileType profileutil.ProfileType, entitlements plistutil.PlistData) map[string]interface{} {
 	capabilities := map[string]interface{}{}
@@ -475,7 +475,9 @@ func main() {
 	installedCertificates := []certificateutil.CertificateInfoModel{}
 	for _, cert := range certs {
 		// Empty passphrase provided, as already parsed certificate + private key
-		keychainWriter.InstallCertificate(cert, "")
+		if err := keychainWriter.InstallCertificate(cert, ""); err != nil {
+			failE(fmt.Errorf("Failed to install certificate: %w", err))
+		}
 	}
 	/*
 		for _, cert := range certs {
