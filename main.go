@@ -275,7 +275,7 @@ func main() {
 	assetInstaller := codesignasset.NewWriter(*keychainWriter)
 
 	fmt.Println()
-	log.Infof("Downloading certificate(s)...")
+	log.Infof("Downloading Certificate(s)...")
 
 	certificates, err := certDownloader.GetCertificates()
 	if err != nil {
@@ -286,7 +286,6 @@ func main() {
 
 	fmt.Println()
 	log.Infof("Installing downloaded Certificates")
-	fmt.Println()
 
 	for i, cert := range certificates {
 		log.Printf("%d/%d Certificate:", i+1, len(certificates))
@@ -311,6 +310,7 @@ func main() {
 
 	fmt.Println()
 	log.Infof("Installing Provisioning Profile(s)")
+
 	for i, profile := range profiles {
 		log.Printf("%d/%d Provisioning Profile", i+1, len(profiles))
 		log.Printf("%s", profile.Info.String(certificates...))
