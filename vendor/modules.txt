@@ -22,7 +22,7 @@ github.com/bitrise-io/go-utils/sliceutil
 ## explicit
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
-# github.com/bitrise-io/go-xcode v1.0.9
+# github.com/bitrise-io/go-xcode v1.0.10-0.20230105181402-9bca98397633
 ## explicit
 github.com/bitrise-io/go-xcode/certificateutil
 github.com/bitrise-io/go-xcode/devportalservice
@@ -58,7 +58,6 @@ github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.5.0
 github.com/hashicorp/go-version
 # github.com/pkg/errors v0.9.1
-## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib

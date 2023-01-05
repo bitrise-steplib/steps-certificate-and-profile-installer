@@ -2,31 +2,21 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/bitrise-io/go-steputils/input"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
-	v1command "github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-xcode/certificateutil"
-	"github.com/bitrise-io/go-xcode/plistutil"
-	"github.com/bitrise-io/go-xcode/profileutil"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/keychain"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/profiledownloader"
-	"github.com/pkg/errors"
 )
 
 // Config ...
@@ -139,72 +129,6 @@ func (c Config) validate() error {
 	return nil
 }
 
-func downloadFile(destionationPath, URL string) error {
-	url, err := url.Parse(URL)
-	if err != nil {
-		return err
-	}
-
-	scheme := url.Scheme
-
-	tmpDstFilePath := ""
-	if scheme != "file" {
-		tmpDir, err := pathutil.NormalizedOSTempDirPath("download")
-		if err != nil {
-			return err
-		}
-
-		tmpDst := path.Join(tmpDir, "tmp_file")
-		tmpDstFile, err := os.Create(tmpDst)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := tmpDstFile.Close(); err != nil {
-				log.Errorf("Failed to close file (%s), error: %s", tmpDst, err)
-			}
-		}()
-
-		success := false
-		var response *http.Response
-		for i := 0; i < 3 && !success; i++ {
-			if i > 0 {
-				fmt.Println("-> Retrying...")
-				time.Sleep(3 * time.Second)
-			}
-
-			response, err = http.Get(URL)
-			if err != nil {
-				log.Errorf(err.Error())
-			} else {
-				success = true
-			}
-
-			if response != nil {
-				defer func() {
-					if err := response.Body.Close(); err != nil {
-						log.Errorf("Failed to close response body, error: %s", err)
-					}
-				}()
-			}
-		}
-		if !success {
-			return err
-		}
-
-		_, err = io.Copy(tmpDstFile, response.Body)
-		if err != nil {
-			return err
-		}
-
-		tmpDstFilePath = tmpDstFile.Name()
-	} else {
-		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
-	}
-
-	return v1command.CopyFile(tmpDstFilePath, destionationPath)
-}
-
 func strip(str string) string {
 	str = strings.TrimSpace(str)
 	return strings.Trim(str, "\"")
@@ -260,64 +184,6 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	if err := info.CheckValidity(); err != nil {
 		log.Errorf("[X] %s", err)
 	}
-}
-
-func collectCapabilities(profileType profileutil.ProfileType, entitlements plistutil.PlistData) map[string]interface{} {
-	capabilities := map[string]interface{}{}
-	for key, value := range entitlements {
-		found := profileutil.KnownProfileCapabilitiesMap[profileType][key]
-		if found {
-			capabilities[key] = value
-		}
-	}
-	return capabilities
-}
-
-func printProfileInfo(profileType profileutil.ProfileType, info profileutil.ProvisioningProfileInfoModel, installedCertificates []certificateutil.CertificateInfoModel) {
-	log.Donef("%s (%s)", info.Name, info.UUID)
-	log.Printf("exportType: %s", string(info.ExportType))
-	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
-	log.Printf("bundleID: %s", info.BundleID)
-
-	capabilities := collectCapabilities(profileType, info.Entitlements)
-	if len(capabilities) > 0 {
-		log.Printf("capabilities:")
-		for key, value := range capabilities {
-			log.Printf("- %s: %v", key, value)
-		}
-	}
-
-	log.Printf("certificates:")
-	for _, certificateInfo := range info.DeveloperCertificates {
-		log.Printf("- %s", certificateInfo.CommonName)
-		log.Printf("  serial: %s", certificateInfo.Serial)
-		log.Printf("  teamID: %s", certificateInfo.TeamID)
-	}
-
-	if len(info.ProvisionedDevices) > 0 {
-		log.Printf("devices:")
-		for _, deviceID := range info.ProvisionedDevices {
-			log.Printf("- %s", deviceID)
-		}
-	}
-
-	log.Printf("expire: %s", info.ExpirationDate)
-
-	if !info.HasInstalledCertificate(installedCertificates) {
-		log.Errorf("[X] none of the profile's certificates are installed")
-	}
-
-	if err := info.CheckValidity(); err != nil {
-		log.Errorf("[X] %s", err)
-	}
-
-	if info.IsXcodeManaged() {
-		log.Warnf("[!] xcode managed profile")
-	}
-}
-
-func commandError(printableCmd string, cmdOut string, cmdErr error) error {
-	return errors.Wrapf(cmdErr, "%s failed, out: %s", printableCmd, cmdOut)
 }
 
 func failF(format string, v ...interface{}) {
@@ -436,14 +302,14 @@ func main() {
 	log.Infof("Downloading Provisioning Profile(s)...")
 
 	profileDownloader := profiledownloader.New(provisioningProfileURLs, httpClient)
-	assetInstaller := codesignasset.New(keychainWriter)
+	assetInstaller := codesignasset.NewWriter(*keychainWriter)
 
 	profiles, err := profileDownloader.GetProfiles()
 	if err != nil {
 		failE(fmt.Errorf("Download failed: %w", err))
 	}
 
-	log.Printf("%d Provisoning Profile(s) downlaoded.", len(profiles))
+	log.Printf("%d Provisoning Profile(s) downloaded.", len(profiles))
 
 	fmt.Println()
 	log.Infof("Installing Provisioning Profile(s)")
