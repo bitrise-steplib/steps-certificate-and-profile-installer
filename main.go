@@ -442,10 +442,21 @@ func main() {
 	log.Infof("Downloading & installing Certificate(s)")
 	fmt.Println()
 
+	log.SetEnableDebugLog(true)
 	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, retry.NewHTTPClient().StandardClient())
-	certs, err := certDownloader.GetCertificates()
+	certificates, err := certDownloader.GetCertificates()
 	if err != nil {
 		failE(fmt.Errorf("Failed to download certificates: %w", err))
+	}
+
+	if len(certificates) == 0 {
+		log.Warnf("No certificates are uploaded.")
+	}
+
+	fmt.Println()
+	log.Printf("%d certificates downloaded:", len(certificates))
+	for _, cert := range certificates {
+		log.Printf("- %s", cert)
 	}
 
 	// certificatePassphraseMap := map[string]string{}
@@ -473,7 +484,7 @@ func main() {
 	}
 
 	installedCertificates := []certificateutil.CertificateInfoModel{}
-	for _, cert := range certs {
+	for _, cert := range certificates {
 		// Empty passphrase provided, as already parsed certificate + private key
 		if err := keychainWriter.InstallCertificate(cert, ""); err != nil {
 			failE(fmt.Errorf("Failed to install certificate: %w", err))
