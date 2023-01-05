@@ -23,7 +23,9 @@ import (
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/keychain"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/profiledownloader"
 	"github.com/pkg/errors"
 )
 
@@ -396,22 +398,6 @@ func main() {
 		log.Warnf("No Provisioning Profile provided")
 	}
 
-	// Init
-	homeDir := os.Getenv("HOME")
-	provisioningProfileDir := path.Join(homeDir, "Library/MobileDevice/Provisioning Profiles")
-	if exist, err := pathutil.IsPathExists(provisioningProfileDir); err != nil {
-		failF("Failed to check path (%s), err: %s", provisioningProfileDir, err)
-	} else if !exist {
-		if err := os.MkdirAll(provisioningProfileDir, 0777); err != nil {
-			failF("Failed to create path (%s), err: %s", provisioningProfileDir, err)
-		}
-	}
-
-	tempDir, err := pathutil.NormalizedOSTempDirPath("bitrise-cert-tmp")
-	if err != nil {
-		failF("Failed to create tmp directory, err: %s", err)
-	}
-
 	keychainWriter, err := keychain.New(configs.KeychainPath, stepconf.Secret(configs.KeychainPassword), command.NewFactory(env.NewRepository()))
 	if err != nil {
 		failE(fmt.Errorf("Failed to open Keychain: %w", err))
@@ -421,72 +407,55 @@ func main() {
 	log.Infof("Downloading certificate(s)...")
 	fmt.Println()
 
-	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, retry.NewHTTPClient().StandardClient())
+	httpClient := retry.NewHTTPClient().StandardClient()
+	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, httpClient)
 	certificates, err := certDownloader.GetCertificates()
 	if err != nil {
-		failE(fmt.Errorf("Failed to download certificates: %w", err))
-	}
-
-	if len(certificates) == 0 {
-		log.Warnf("No Certificates are uploaded.")
+		failE(fmt.Errorf("Download failed: %w", err))
 	}
 
 	log.Printf("%d Certificate(s) downloaded.", len(certificates))
-	fmt.Println()
-
-	for i, cert := range certificates {
-		log.Printf("Certificate %d/%d", i, len(certificates))
-		printCertificateInfo(cert)
-		fmt.Println()
-	}
 
 	fmt.Println()
 	log.Infof("Installing downloaded Certificates...")
 	fmt.Println()
 
-	installedCertificates := []certificateutil.CertificateInfoModel{}
-	for _, cert := range certificates {
+	for i, cert := range certificates {
+		log.Printf("%d/%d Certificate", i, len(certificates))
+		printCertificateInfo(cert)
+
 		// Empty passphrase provided, as already parsed certificate + private key
 		if err := keychainWriter.InstallCertificate(cert, ""); err != nil {
 			failE(fmt.Errorf("Failed to install certificate: %w", err))
 		}
+
+		fmt.Println()
 	}
 
 	//
 	// Install provisioning profiles
 	fmt.Println()
-	log.Infof("Downloading & installing Provisioning Profile(s)")
+	log.Infof("Downloading Provisioning Profile(s)...")
 
-	for idx, profileURL := range provisioningProfileURLs {
+	profileDownloader := profiledownloader.New(provisioningProfileURLs, httpClient)
+	assetInstaller := codesignasset.New(keychainWriter)
+
+	profiles, err := profileDownloader.GetProfiles()
+	if err != nil {
+		failE(fmt.Errorf("Download failed: %w", err))
+	}
+
+	log.Printf("%d Provisoning Profile(s) downlaoded.", len(profiles))
+
+	fmt.Println()
+	log.Infof("Installing Provisioning Profile(s)")
+	for i, profile := range profiles {
+		log.Printf("%d/%d Provisioning Profile", i, len(profiles))
+		log.Printf("%s", profile.Info.String(certificates...))
 		fmt.Println()
-		log.Printf("Downloading provisioning profile: %d/%d", idx+1, profileCount)
 
-		provisioningProfileExt := "provisionprofile"
-		profileType := profileutil.ProfileTypeMacOs
-		if !strings.Contains(profileURL, "."+provisioningProfileExt) {
-			provisioningProfileExt = "mobileprovision"
-			profileType = profileutil.ProfileTypeIos
+		if err := assetInstaller.InstallProfile(profile.Profile); err != nil {
+			failE(fmt.Errorf("Failed to install Provisioning Profile: %w", err))
 		}
-
-		profileTmpPth := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
-		if err := downloadFile(profileTmpPth, profileURL); err != nil {
-			failF("Download failed, err: %s", err)
-		}
-
-		profile, err := profileutil.NewProvisioningProfileInfoFromFile(profileTmpPth)
-		if err != nil {
-			failF("Failed to parse profile, error: %s", err)
-		}
-
-		profilePth := path.Join(provisioningProfileDir, profile.UUID+"."+provisioningProfileExt)
-
-		log.Printf("Moving it to: %s", profilePth)
-
-		if err := v1command.CopyFile(profileTmpPth, profilePth); err != nil {
-			failF("Failed to copy profile from: %s to: %s", profileTmpPth, profilePth)
-		}
-
-		fmt.Println()
-		printProfileInfo(profileType, profile, installedCertificates)
 	}
 }
