@@ -179,7 +179,7 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	log.Donef(info.CommonName)
 	log.Printf("serial: %s", info.Serial)
 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
-	log.Printf("expire: %s", info.EndDate)
+	log.Printf("expiry: %s", info.EndDate)
 
 	if err := info.CheckValidity(); err != nil {
 		log.Errorf("[X] %s", err)
@@ -269,12 +269,14 @@ func main() {
 		failE(fmt.Errorf("Failed to open Keychain: %w", err))
 	}
 
-	fmt.Println()
-	log.Infof("Downloading certificate(s)...")
-	fmt.Println()
-
 	httpClient := retry.NewHTTPClient().StandardClient()
 	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, httpClient)
+	profileDownloader := profiledownloader.New(provisioningProfileURLs, httpClient)
+	assetInstaller := codesignasset.NewWriter(*keychainWriter)
+
+	fmt.Println()
+	log.Infof("Downloading certificate(s)...")
+
 	certificates, err := certDownloader.GetCertificates()
 	if err != nil {
 		failE(fmt.Errorf("Download failed: %w", err))
@@ -283,15 +285,14 @@ func main() {
 	log.Printf("%d Certificate(s) downloaded.", len(certificates))
 
 	fmt.Println()
-	log.Infof("Installing downloaded Certificates...")
+	log.Infof("Installing downloaded Certificates")
 	fmt.Println()
 
 	for i, cert := range certificates {
-		log.Printf("%d/%d Certificate", i, len(certificates))
+		log.Printf("%d/%d Certificate:", i+1, len(certificates))
 		printCertificateInfo(cert)
 
-		// Empty passphrase provided, as already parsed certificate + private key
-		if err := keychainWriter.InstallCertificate(cert, ""); err != nil {
+		if err := assetInstaller.InstallCertificate(cert); err != nil {
 			failE(fmt.Errorf("Failed to install certificate: %w", err))
 		}
 
@@ -300,9 +301,6 @@ func main() {
 
 	fmt.Println()
 	log.Infof("Downloading Provisioning Profile(s)...")
-
-	profileDownloader := profiledownloader.New(provisioningProfileURLs, httpClient)
-	assetInstaller := codesignasset.NewWriter(*keychainWriter)
 
 	profiles, err := profileDownloader.GetProfiles()
 	if err != nil {
@@ -314,7 +312,7 @@ func main() {
 	fmt.Println()
 	log.Infof("Installing Provisioning Profile(s)")
 	for i, profile := range profiles {
-		log.Printf("%d/%d Provisioning Profile", i, len(profiles))
+		log.Printf("%d/%d Provisioning Profile", i+1, len(profiles))
 		log.Printf("%s", profile.Info.String(certificates...))
 		fmt.Println()
 
