@@ -12,13 +12,18 @@ import (
 	"unicode/utf8"
 
 	"github.com/bitrise-io/go-steputils/input"
-	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-steputils/v2/stepconf"
+	v1command "github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-xcode/certificateutil"
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
-	version "github.com/hashicorp/go-version"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/keychain"
 	"github.com/pkg/errors"
 )
 
@@ -195,7 +200,7 @@ func downloadFile(destionationPath, URL string) error {
 		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
 	}
 
-	return command.CopyFile(tmpDstFilePath, destionationPath)
+	return v1command.CopyFile(tmpDstFilePath, destionationPath)
 }
 
 func strip(str string) string {
@@ -332,7 +337,7 @@ func main() {
 	fmt.Println()
 
 	// Collect Certificates
-	certificateURLPassphraseMap := map[string]string{}
+	var certificateURLPassphraseMap []certdownloader.CertificateAndPassphrase
 
 	if configs.CertificateURL != "" {
 		certificateURLs := splitAndTrimSpace(configs.CertificateURL, "|")
@@ -343,7 +348,7 @@ func main() {
 		if len(certificateURLs) != len(certificatePassphrases) {
 			failF(
 				"Certificate URL count: (%d), is not equal to Certificate passphrase count: (%d).\n"+
-					"This could be because one of your passphrases contains a pipe character (\"|\") " +
+					"This could be because one of your passphrases contains a pipe character (\"|\") "+
 					"which is not supported, as it is used as the delimiter in the step input.",
 				len(certificateURLs),
 				len(certificatePassphrases),
@@ -354,13 +359,19 @@ func main() {
 			certificateURL := certificateURLs[i]
 			certificatePassphrase := certificatePassphrases[i]
 
-			certificateURLPassphraseMap[certificateURL] = certificatePassphrase
+			certificateURLPassphraseMap = append(certificateURLPassphraseMap, certdownloader.CertificateAndPassphrase{
+				URL:        certificateURL,
+				Passphrase: certificatePassphrase,
+			})
 		}
 	}
 
 	if configs.DefaultCertificateURL != "" && configs.InstallDefaults == "yes" {
 		log.Printf("Default Certificate given")
-		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
+		certificateURLPassphraseMap = append(certificateURLPassphraseMap, certdownloader.CertificateAndPassphrase{
+			URL:        configs.DefaultCertificateURL,
+			Passphrase: configs.DefaultCertificatePassphrase,
+		})
 	}
 
 	certificateCount := len(certificateURLPassphraseMap)
@@ -416,7 +427,7 @@ func main() {
 		} else if !exist {
 			log.Infof("Creating keychain: %s", configs.KeychainPath)
 
-			cmd := command.New("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
+			cmd := v1command.New("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
 			if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 				failE(commandError(cmd.PrintableCommandArgs(), out, err))
 			}
@@ -431,108 +442,123 @@ func main() {
 	log.Infof("Downloading & installing Certificate(s)")
 	fmt.Println()
 
-	certificatePassphraseMap := map[string]string{}
-	idx := 0
-	for certURL, pass := range certificateURLPassphraseMap {
-		log.Printf("Downloading certificate: %d/%d", idx+1, certificateCount)
-
-		certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
-		if err := downloadFile(certPath, certURL); err != nil {
-			failF("Download failed, err: %s", err)
-		}
-		certificatePassphraseMap[certPath] = pass
-
-		idx++
+	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, retry.NewHTTPClient().StandardClient())
+	certs, err := certDownloader.GetCertificates()
+	if err != nil {
+		failE(fmt.Errorf("Failed to download certificates: %w", err))
 	}
+
+	// certificatePassphraseMap := map[string]string{}
+	// idx := 0
+	// for certURL, pass := range certificateURLPassphraseMap {
+	// 	log.Printf("Downloading certificate: %d/%d", idx+1, certificateCount)
+
+	// 	certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
+	// 	if err := downloadFile(certPath, certURL); err != nil {
+	// 		failF("Download failed, err: %s", err)
+	// 	}
+	// 	certificatePassphraseMap[certPath] = pass
+
+	// 	idx++
+	// }
 
 	//
 	// Install certificate
 	log.Printf("Installing downloaded certificates")
 	fmt.Println()
 
+	keychainWriter, err := keychain.New(configs.KeychainPath, stepconf.Secret(configs.KeychainPassword), command.NewFactory(env.NewRepository()))
+	if err != nil {
+		failE(fmt.Errorf("failed to open keychain: %w", err))
+	}
+
 	installedCertificates := []certificateutil.CertificateInfoModel{}
+	for _, cert := range certs {
+		// Empty passphrase provided, as already parsed certificate + private key
+		keychainWriter.InstallCertificate(cert, "")
+	}
+	/*
+		for _, cert := range certs {
+			certInfos, err := certificateutil.CertificatesFromPKCS12File(cert, pass)
+			if err != nil {
+				failF("Failed to parse certificate, error: %s", err)
+			}
+			installedCertificates = append(installedCertificates, certInfos...)
 
-	for cert, pass := range certificatePassphraseMap {
-		certInfos, err := certificateutil.CertificatesFromPKCS12File(cert, pass)
+			for _, certInfo := range certInfos {
+				printCertificateInfo(certInfo)
+			}
+			fmt.Println()
+
+			// Unlock keychain (if locked)
+			cmd := command.New("security", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
+			if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+				failE(commandError(cmd.PrintableCommandArgs(), out, err))
+			}
+
+			// Import items into a keychain.
+			cmd = command.New("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
+			if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+				failE(commandError(cmd.PrintableCommandArgs(), out, err))
+			}
+		}
+
+		// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
+		// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
+		cmd := command.New("sw_vers", "-productVersion")
+		out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 		if err != nil {
-			failF("Failed to parse certificate, error: %s", err)
+			failE(commandError(cmd.PrintableCommandArgs(), out, err))
 		}
-		installedCertificates = append(installedCertificates, certInfos...)
 
-		for _, certInfo := range certInfos {
-			printCertificateInfo(certInfo)
+		osVersion, err := version.NewVersion(out)
+		if err != nil {
+			failF("Failed to parse os version (%s), error: %s", out, err)
 		}
-		fmt.Println()
 
-		// Unlock keychain (if locked)
-		cmd := command.New("security", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
+		sierraVersionStr := "10.12.0"
+		sierraVersion, err := version.NewVersion(sierraVersionStr)
+		if err != nil {
+			failF("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
+		}
+
+		if !osVersion.LessThan(sierraVersion) {
+			cmd := command.New("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
+			if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
+				failE(commandError(cmd.PrintableCommandArgs(), out, err))
+			}
+		}
+		// ---
+
+		// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
+		cmd = command.New("security", "-v", "set-keychain-settings", "-lut", "72000", configs.KeychainPath)
 		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 			failE(commandError(cmd.PrintableCommandArgs(), out, err))
 		}
 
-		// Import items into a keychain.
-		cmd = command.New("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
+		// List keychains
+		cmd = command.New("security", "list-keychains")
+		listKeychainsOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			failE(commandError(cmd.PrintableCommandArgs(), listKeychainsOut, err))
+		}
+
+		keychainList := splitAndStrip(listKeychainsOut, "\n")
+		keychainList = appendWithoutDuplicatesAndKeepOrder(keychainList, configs.KeychainPath)
+
+		// Set keychain search path
+		args := append([]string{"-v", "list-keychains", "-s"}, keychainList...)
+		cmd = command.New("security", args...)
 		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 			failE(commandError(cmd.PrintableCommandArgs(), out, err))
 		}
-	}
 
-	// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
-	// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
-	cmd := command.New("sw_vers", "-productVersion")
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	osVersion, err := version.NewVersion(out)
-	if err != nil {
-		failF("Failed to parse os version (%s), error: %s", out, err)
-	}
-
-	sierraVersionStr := "10.12.0"
-	sierraVersion, err := version.NewVersion(sierraVersionStr)
-	if err != nil {
-		failF("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
-	}
-
-	if !osVersion.LessThan(sierraVersion) {
-		cmd := command.New("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
+		// Set the default keychain
+		cmd = command.New("security", "-v", "default-keychain", "-s", configs.KeychainPath)
 		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 			failE(commandError(cmd.PrintableCommandArgs(), out, err))
 		}
-	}
-	// ---
-
-	// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
-	cmd = command.New("security", "-v", "set-keychain-settings", "-lut", "72000", configs.KeychainPath)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	// List keychains
-	cmd = command.New("security", "list-keychains")
-	listKeychainsOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), listKeychainsOut, err))
-	}
-
-	keychainList := splitAndStrip(listKeychainsOut, "\n")
-	keychainList = appendWithoutDuplicatesAndKeepOrder(keychainList, configs.KeychainPath)
-
-	// Set keychain search path
-	args := append([]string{"-v", "list-keychains", "-s"}, keychainList...)
-	cmd = command.New("security", args...)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	// Set the default keychain
-	cmd = command.New("security", "-v", "default-keychain", "-s", configs.KeychainPath)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
+	*/
 	//
 	// Install provisioning profiles
 	fmt.Println()
@@ -563,7 +589,7 @@ func main() {
 
 		log.Printf("Moving it to: %s", profilePth)
 
-		if err := command.CopyFile(profileTmpPth, profilePth); err != nil {
+		if err := v1command.CopyFile(profileTmpPth, profilePth); err != nil {
 			failF("Failed to copy profile from: %s to: %s", profileTmpPth, profilePth)
 		}
 
