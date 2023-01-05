@@ -412,28 +412,9 @@ func main() {
 		failF("Failed to create tmp directory, err: %s", err)
 	}
 
-	if exist, err := pathutil.IsPathExists(configs.KeychainPath); err != nil {
-		failF("Failed to check path (%s), err: %s", configs.KeychainPath, err)
-	} else if !exist {
-		fmt.Println()
-		log.Warnf("Keychain (%s) does not exist", configs.KeychainPath)
-
-		keychainPth := fmt.Sprintf("%s-db", configs.KeychainPath)
-
-		log.Printf(" Checking (%s)", keychainPth)
-
-		if exist, err := pathutil.IsPathExists(keychainPth); err != nil {
-			failF("Failed to check path (%s), err: %s", keychainPth, err)
-		} else if !exist {
-			log.Infof("Creating keychain: %s", configs.KeychainPath)
-
-			cmd := v1command.New("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
-			if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-				failE(commandError(cmd.PrintableCommandArgs(), out, err))
-			}
-		}
-	} else {
-		log.Printf("Keychain already exists, using it: %s", configs.KeychainPath)
+	keychainWriter, err := keychain.New(configs.KeychainPath, stepconf.Secret(configs.KeychainPassword), command.NewFactory(env.NewRepository()))
+	if err != nil {
+		failE(fmt.Errorf("Failed to open Keychain: %w", err))
 	}
 
 	fmt.Println()
@@ -462,13 +443,6 @@ func main() {
 	fmt.Println()
 	log.Infof("Installing downloaded Certificates...")
 	fmt.Println()
-
-	// Contains duplicate of earlier keychain path check logic.
-	// Leaving it after that, so the Info log lines are still printed.
-	keychainWriter, err := keychain.New(configs.KeychainPath, stepconf.Secret(configs.KeychainPassword), command.NewFactory(env.NewRepository()))
-	if err != nil {
-		failE(fmt.Errorf("Failed to open Keychain: %w", err))
-	}
 
 	installedCertificates := []certificateutil.CertificateInfoModel{}
 	for _, cert := range certificates {
