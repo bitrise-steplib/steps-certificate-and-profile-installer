@@ -312,7 +312,7 @@ func main() {
 	log.Infof("Installing Provisioning Profile(s)")
 
 	for i, profile := range profiles {
-		log.Printf("%d/%d Provisioning Profile", i+1, len(profiles))
+		log.Printf("%d/%d Provisioning Profile:", i+1, len(profiles))
 		log.Printf("%s", profile.Info.String(certificates...))
 		fmt.Println()
 
