@@ -2,24 +2,21 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/bitrise-io/go-steputils/input"
-	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/retry"
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-xcode/certificateutil"
-	"github.com/bitrise-io/go-xcode/plistutil"
-	"github.com/bitrise-io/go-xcode/profileutil"
-	version "github.com/hashicorp/go-version"
-	"github.com/pkg/errors"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/keychain"
+	"github.com/bitrise-io/go-xcode/v2/autocodesign/profiledownloader"
 )
 
 // Config ...
@@ -132,72 +129,6 @@ func (c Config) validate() error {
 	return nil
 }
 
-func downloadFile(destionationPath, URL string) error {
-	url, err := url.Parse(URL)
-	if err != nil {
-		return err
-	}
-
-	scheme := url.Scheme
-
-	tmpDstFilePath := ""
-	if scheme != "file" {
-		tmpDir, err := pathutil.NormalizedOSTempDirPath("download")
-		if err != nil {
-			return err
-		}
-
-		tmpDst := path.Join(tmpDir, "tmp_file")
-		tmpDstFile, err := os.Create(tmpDst)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := tmpDstFile.Close(); err != nil {
-				log.Errorf("Failed to close file (%s), error: %s", tmpDst, err)
-			}
-		}()
-
-		success := false
-		var response *http.Response
-		for i := 0; i < 3 && !success; i++ {
-			if i > 0 {
-				fmt.Println("-> Retrying...")
-				time.Sleep(3 * time.Second)
-			}
-
-			response, err = http.Get(URL)
-			if err != nil {
-				log.Errorf(err.Error())
-			} else {
-				success = true
-			}
-
-			if response != nil {
-				defer func() {
-					if err := response.Body.Close(); err != nil {
-						log.Errorf("Failed to close response body, error: %s", err)
-					}
-				}()
-			}
-		}
-		if !success {
-			return err
-		}
-
-		_, err = io.Copy(tmpDstFile, response.Body)
-		if err != nil {
-			return err
-		}
-
-		tmpDstFilePath = tmpDstFile.Name()
-	} else {
-		tmpDstFilePath = strings.Replace(URL, scheme+"://", "", -1)
-	}
-
-	return command.CopyFile(tmpDstFilePath, destionationPath)
-}
-
 func strip(str string) string {
 	str = strings.TrimSpace(str)
 	return strings.Trim(str, "\"")
@@ -248,69 +179,11 @@ func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	log.Donef(info.CommonName)
 	log.Printf("serial: %s", info.Serial)
 	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
-	log.Printf("expire: %s", info.EndDate)
+	log.Printf("expiry: %s", info.EndDate)
 
 	if err := info.CheckValidity(); err != nil {
 		log.Errorf("[X] %s", err)
 	}
-}
-
-func collectCapabilities(profileType profileutil.ProfileType, entitlements plistutil.PlistData) map[string]interface{} {
-	capabilities := map[string]interface{}{}
-	for key, value := range entitlements {
-		found := profileutil.KnownProfileCapabilitiesMap[profileType][key]
-		if found {
-			capabilities[key] = value
-		}
-	}
-	return capabilities
-}
-
-func printProfileInfo(profileType profileutil.ProfileType, info profileutil.ProvisioningProfileInfoModel, installedCertificates []certificateutil.CertificateInfoModel) {
-	log.Donef("%s (%s)", info.Name, info.UUID)
-	log.Printf("exportType: %s", string(info.ExportType))
-	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
-	log.Printf("bundleID: %s", info.BundleID)
-
-	capabilities := collectCapabilities(profileType, info.Entitlements)
-	if len(capabilities) > 0 {
-		log.Printf("capabilities:")
-		for key, value := range capabilities {
-			log.Printf("- %s: %v", key, value)
-		}
-	}
-
-	log.Printf("certificates:")
-	for _, certificateInfo := range info.DeveloperCertificates {
-		log.Printf("- %s", certificateInfo.CommonName)
-		log.Printf("  serial: %s", certificateInfo.Serial)
-		log.Printf("  teamID: %s", certificateInfo.TeamID)
-	}
-
-	if len(info.ProvisionedDevices) > 0 {
-		log.Printf("devices:")
-		for _, deviceID := range info.ProvisionedDevices {
-			log.Printf("- %s", deviceID)
-		}
-	}
-
-	log.Printf("expire: %s", info.ExpirationDate)
-
-	if !info.HasInstalledCertificate(installedCertificates) {
-		log.Errorf("[X] none of the profile's certificates are installed")
-	}
-
-	if err := info.CheckValidity(); err != nil {
-		log.Errorf("[X] %s", err)
-	}
-
-	if info.IsXcodeManaged() {
-		log.Warnf("[!] xcode managed profile")
-	}
-}
-
-func commandError(printableCmd string, cmdOut string, cmdErr error) error {
-	return errors.Wrapf(cmdErr, "%s failed, out: %s", printableCmd, cmdOut)
 }
 
 func failF(format string, v ...interface{}) {
@@ -332,7 +205,7 @@ func main() {
 	fmt.Println()
 
 	// Collect Certificates
-	certificateURLPassphraseMap := map[string]string{}
+	var certificateURLPassphraseMap []certdownloader.CertificateAndPassphrase
 
 	if configs.CertificateURL != "" {
 		certificateURLs := splitAndTrimSpace(configs.CertificateURL, "|")
@@ -343,7 +216,7 @@ func main() {
 		if len(certificateURLs) != len(certificatePassphrases) {
 			failF(
 				"Certificate URL count: (%d), is not equal to Certificate passphrase count: (%d).\n"+
-					"This could be because one of your passphrases contains a pipe character (\"|\") " +
+					"This could be because one of your passphrases contains a pipe character (\"|\") "+
 					"which is not supported, as it is used as the delimiter in the step input.",
 				len(certificateURLs),
 				len(certificatePassphrases),
@@ -354,13 +227,19 @@ func main() {
 			certificateURL := certificateURLs[i]
 			certificatePassphrase := certificatePassphrases[i]
 
-			certificateURLPassphraseMap[certificateURL] = certificatePassphrase
+			certificateURLPassphraseMap = append(certificateURLPassphraseMap, certdownloader.CertificateAndPassphrase{
+				URL:        certificateURL,
+				Passphrase: certificatePassphrase,
+			})
 		}
 	}
 
 	if configs.DefaultCertificateURL != "" && configs.InstallDefaults == "yes" {
 		log.Printf("Default Certificate given")
-		certificateURLPassphraseMap[configs.DefaultCertificateURL] = configs.DefaultCertificatePassphrase
+		certificateURLPassphraseMap = append(certificateURLPassphraseMap, certdownloader.CertificateAndPassphrase{
+			URL:        configs.DefaultCertificateURL,
+			Passphrase: configs.DefaultCertificatePassphrase,
+		})
 	}
 
 	certificateCount := len(certificateURLPassphraseMap)
@@ -385,189 +264,60 @@ func main() {
 		log.Warnf("No Provisioning Profile provided")
 	}
 
-	// Init
-	homeDir := os.Getenv("HOME")
-	provisioningProfileDir := path.Join(homeDir, "Library/MobileDevice/Provisioning Profiles")
-	if exist, err := pathutil.IsPathExists(provisioningProfileDir); err != nil {
-		failF("Failed to check path (%s), err: %s", provisioningProfileDir, err)
-	} else if !exist {
-		if err := os.MkdirAll(provisioningProfileDir, 0777); err != nil {
-			failF("Failed to create path (%s), err: %s", provisioningProfileDir, err)
-		}
-	}
-
-	tempDir, err := pathutil.NormalizedOSTempDirPath("bitrise-cert-tmp")
+	keychainWriter, err := keychain.New(configs.KeychainPath, stepconf.Secret(configs.KeychainPassword), command.NewFactory(env.NewRepository()))
 	if err != nil {
-		failF("Failed to create tmp directory, err: %s", err)
+		failE(fmt.Errorf("Failed to open Keychain: %w", err))
 	}
 
-	if exist, err := pathutil.IsPathExists(configs.KeychainPath); err != nil {
-		failF("Failed to check path (%s), err: %s", configs.KeychainPath, err)
-	} else if !exist {
-		fmt.Println()
-		log.Warnf("Keychain (%s) does not exist", configs.KeychainPath)
+	httpClient := retry.NewHTTPClient().StandardClient()
+	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, httpClient)
+	profileDownloader := profiledownloader.New(provisioningProfileURLs, httpClient)
+	assetInstaller := codesignasset.NewWriter(*keychainWriter)
 
-		keychainPth := fmt.Sprintf("%s-db", configs.KeychainPath)
-
-		log.Printf(" Checking (%s)", keychainPth)
-
-		if exist, err := pathutil.IsPathExists(keychainPth); err != nil {
-			failF("Failed to check path (%s), err: %s", keychainPth, err)
-		} else if !exist {
-			log.Infof("Creating keychain: %s", configs.KeychainPath)
-
-			cmd := command.New("security", "-v", "create-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
-			if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-				failE(commandError(cmd.PrintableCommandArgs(), out, err))
-			}
-		}
-	} else {
-		log.Printf("Keychain already exists, using it: %s", configs.KeychainPath)
-	}
-
-	//
-	// Download certificate
 	fmt.Println()
-	log.Infof("Downloading & installing Certificate(s)")
+	log.Infof("Downloading Certificate(s)...")
+
+	certificates, err := certDownloader.GetCertificates()
+	if err != nil {
+		failE(fmt.Errorf("Download failed: %w", err))
+	}
+
+	log.Printf("%d Certificate(s) downloaded.", len(certificates))
+
 	fmt.Println()
+	log.Infof("Installing downloaded Certificates")
 
-	certificatePassphraseMap := map[string]string{}
-	idx := 0
-	for certURL, pass := range certificateURLPassphraseMap {
-		log.Printf("Downloading certificate: %d/%d", idx+1, certificateCount)
+	for i, cert := range certificates {
+		log.Printf("%d/%d Certificate:", i+1, len(certificates))
+		printCertificateInfo(cert)
 
-		certPath := path.Join(tempDir, fmt.Sprintf("Certificate-%d.p12", idx))
-		if err := downloadFile(certPath, certURL); err != nil {
-			failF("Download failed, err: %s", err)
-		}
-		certificatePassphraseMap[certPath] = pass
-
-		idx++
-	}
-
-	//
-	// Install certificate
-	log.Printf("Installing downloaded certificates")
-	fmt.Println()
-
-	installedCertificates := []certificateutil.CertificateInfoModel{}
-
-	for cert, pass := range certificatePassphraseMap {
-		certInfos, err := certificateutil.CertificatesFromPKCS12File(cert, pass)
-		if err != nil {
-			failF("Failed to parse certificate, error: %s", err)
-		}
-		installedCertificates = append(installedCertificates, certInfos...)
-
-		for _, certInfo := range certInfos {
-			printCertificateInfo(certInfo)
-		}
-		fmt.Println()
-
-		// Unlock keychain (if locked)
-		cmd := command.New("security", "unlock-keychain", "-p", configs.KeychainPassword, configs.KeychainPath)
-		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-			failE(commandError(cmd.PrintableCommandArgs(), out, err))
-		}
-
-		// Import items into a keychain.
-		cmd = command.New("security", "import", cert, "-k", configs.KeychainPath, "-P", pass, "-A")
-		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-			failE(commandError(cmd.PrintableCommandArgs(), out, err))
-		}
-	}
-
-	// This is new behavior in Sierra, [openradar](https://openradar.appspot.com/28524119)
-	// You need to use "security set-key-partition-list -S apple-tool:,apple: -k keychainPass keychainName" after importing the item and before attempting to use it via codesign.
-	cmd := command.New("sw_vers", "-productVersion")
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	osVersion, err := version.NewVersion(out)
-	if err != nil {
-		failF("Failed to parse os version (%s), error: %s", out, err)
-	}
-
-	sierraVersionStr := "10.12.0"
-	sierraVersion, err := version.NewVersion(sierraVersionStr)
-	if err != nil {
-		failF("Failed to parse os version (%s), error: %s", sierraVersionStr, err)
-	}
-
-	if !osVersion.LessThan(sierraVersion) {
-		cmd := command.New("security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-k", configs.KeychainPassword, configs.KeychainPath)
-		if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-			failE(commandError(cmd.PrintableCommandArgs(), out, err))
-		}
-	}
-	// ---
-
-	// Set keychain settings: Lock keychain when the system sleeps, Lock keychain after timeout interval, Timeout in seconds
-	cmd = command.New("security", "-v", "set-keychain-settings", "-lut", "72000", configs.KeychainPath)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	// List keychains
-	cmd = command.New("security", "list-keychains")
-	listKeychainsOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), listKeychainsOut, err))
-	}
-
-	keychainList := splitAndStrip(listKeychainsOut, "\n")
-	keychainList = appendWithoutDuplicatesAndKeepOrder(keychainList, configs.KeychainPath)
-
-	// Set keychain search path
-	args := append([]string{"-v", "list-keychains", "-s"}, keychainList...)
-	cmd = command.New("security", args...)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	// Set the default keychain
-	cmd = command.New("security", "-v", "default-keychain", "-s", configs.KeychainPath)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		failE(commandError(cmd.PrintableCommandArgs(), out, err))
-	}
-
-	//
-	// Install provisioning profiles
-	fmt.Println()
-	log.Infof("Downloading & installing Provisioning Profile(s)")
-
-	for idx, profileURL := range provisioningProfileURLs {
-		fmt.Println()
-		log.Printf("Downloading provisioning profile: %d/%d", idx+1, profileCount)
-
-		provisioningProfileExt := "provisionprofile"
-		profileType := profileutil.ProfileTypeMacOs
-		if !strings.Contains(profileURL, "."+provisioningProfileExt) {
-			provisioningProfileExt = "mobileprovision"
-			profileType = profileutil.ProfileTypeIos
-		}
-
-		profileTmpPth := path.Join(tempDir, fmt.Sprintf("profile-%d.%s", idx, provisioningProfileExt))
-		if err := downloadFile(profileTmpPth, profileURL); err != nil {
-			failF("Download failed, err: %s", err)
-		}
-
-		profile, err := profileutil.NewProvisioningProfileInfoFromFile(profileTmpPth)
-		if err != nil {
-			failF("Failed to parse profile, error: %s", err)
-		}
-
-		profilePth := path.Join(provisioningProfileDir, profile.UUID+"."+provisioningProfileExt)
-
-		log.Printf("Moving it to: %s", profilePth)
-
-		if err := command.CopyFile(profileTmpPth, profilePth); err != nil {
-			failF("Failed to copy profile from: %s to: %s", profileTmpPth, profilePth)
+		if err := assetInstaller.InstallCertificate(cert); err != nil {
+			failE(fmt.Errorf("Failed to install certificate: %w", err))
 		}
 
 		fmt.Println()
-		printProfileInfo(profileType, profile, installedCertificates)
+	}
+
+	fmt.Println()
+	log.Infof("Downloading Provisioning Profile(s)...")
+
+	profiles, err := profileDownloader.GetProfiles()
+	if err != nil {
+		failE(fmt.Errorf("Download failed: %w", err))
+	}
+
+	log.Printf("%d Provisoning Profile(s) downloaded.", len(profiles))
+
+	fmt.Println()
+	log.Infof("Installing Provisioning Profile(s)")
+
+	for i, profile := range profiles {
+		log.Printf("%d/%d Provisioning Profile:", i+1, len(profiles))
+		log.Printf("%s", profile.Info.String(certificates...))
+		fmt.Println()
+
+		if err := assetInstaller.InstallProfile(profile.Profile); err != nil {
+			failE(fmt.Errorf("Failed to install Provisioning Profile: %w", err))
+		}
 	}
 }
