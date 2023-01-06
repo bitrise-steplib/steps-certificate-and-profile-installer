@@ -34,12 +34,9 @@ description: |-
 website: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer
 source_code_url: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer
 support_url: https://github.com/bitrise-steplib/steps-certificate-and-profile-installer/issues
-host_os_tags:
-- osx-10.10
 project_type_tags:
 - ios
 - macos
-- xamarin
 - cordova
 - ionic
 - react-native
@@ -49,12 +46,6 @@ type_tags:
 is_requires_admin_user: false
 is_always_run: false
 is_skippable: false
-deps:
-  brew:
-  - name: go
-  apt_get:
-  - name: golang
-    bin_name: go
 toolkit:
   go:
     package_name: github.com/bitrise-steplib/steps-certificate-and-profile-installer
