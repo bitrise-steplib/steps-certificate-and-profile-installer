@@ -306,7 +306,7 @@ func main() {
 		failE(fmt.Errorf("Download failed: %w", err))
 	}
 
-	log.Printf("%d Provisoning Profile(s) downloaded.", len(profiles))
+	log.Printf("%d Provisioning Profile(s) downloaded.", len(profiles))
 
 	fmt.Println()
 	log.Infof("Installing Provisioning Profile(s)")
