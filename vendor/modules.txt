@@ -33,7 +33,7 @@ github.com/bitrise-io/go-xcode/exportoptions
 github.com/bitrise-io/go-xcode/plistutil
 github.com/bitrise-io/go-xcode/profileutil
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.41.0.20240214155335-5bfd3e5b911d
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.42
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/v2/autocodesign
 github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader
