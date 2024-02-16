@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"unicode/utf8"
@@ -17,6 +19,7 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/keychain"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/profiledownloader"
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 // Config ...
@@ -269,7 +272,16 @@ func main() {
 		failE(fmt.Errorf("Failed to open Keychain: %w", err))
 	}
 
-	httpClient := retry.NewHTTPClient().StandardClient()
+	retryHTTPClient := retry.NewHTTPClient()
+	retryHTTPClient.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			log.Debugf("Received HTTP 404, retrying request...")
+			return true, nil
+		}
+
+		return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
+	}
+	httpClient := retryHTTPClient.StandardClient()
 	certDownloader := certdownloader.NewDownloader(certificateURLPassphraseMap, httpClient)
 	profileDownloader := profiledownloader.New(provisioningProfileURLs, httpClient)
 	assetInstaller := codesignasset.NewWriter(*keychainWriter)
