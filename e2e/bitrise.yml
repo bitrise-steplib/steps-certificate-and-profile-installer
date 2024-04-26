@@ -19,7 +19,7 @@ workflows:
         - content: |-
             #!/bin/env bash
             set -x # Do not set -e as bitrise command is expected to fail
-            bitrise run --config=./e2e/bitrise.yml utility_certificate_url_and_passphrase_not_equal
+            bitrise run --config=./e2e/bitrise.yml utility_certificate_url_and_passphrase_count_not_equal
             if [ $? -ne 1 ] ; then
               echo "Workflow was excepted to fail, exit code not 1."
               exit 1
