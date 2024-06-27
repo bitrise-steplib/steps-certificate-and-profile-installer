@@ -9,6 +9,7 @@ require (
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19
 	github.com/bitrise-io/go-xcode v1.0.18
 	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.42
+	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/stretchr/testify v1.8.4
 )
 
@@ -19,7 +20,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
