@@ -9,13 +9,13 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bitrise-io/colorstring"
 	"github.com/bitrise-io/go-steputils/input"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-xcode/certificateutil"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
@@ -108,7 +108,7 @@ func secureInput(str string) string {
 
 func (c Config) print() {
 	fmt.Println()
-	log.Infof("Configs:")
+	log.Infof("Inputs:")
 	log.Printf(" - CertificateURL: %s", secureInput(c.CertificateURL))
 	log.Printf(" - CertificatePassphrase: %s", secureInput(c.CertificatePassphrase))
 	log.Printf(" - ProvisioningProfileURL: %s", secureInput(c.ProvisioningProfileURL))
@@ -186,9 +186,9 @@ func appendWithoutDuplicatesAndKeepOrder(items []string, item string) []string {
 
 func printCertificateInfo(info certificateutil.CertificateInfoModel) {
 	log.Printf(colorstring.Cyan(info.CommonName))
-	log.Printf("Serial: \t%s", info.Serial)
+	log.Printf("Serial: %s", info.Serial)
 	log.Printf("Team: \t%s (%s)", info.TeamName, info.TeamID)
-	log.Printf("Expiry: \t%s", info.EndDate)
+	log.Printf("Expiry: %s", info.EndDate)
 
 	if err := info.CheckValidity(); err != nil {
 		log.Errorf("[X] %s", err)
@@ -354,12 +354,12 @@ func main() {
 			log.Debugf("%s", profile.Info.String(certificates...))
 		} else {
 			log.Printf("%s", colorstring.Cyan(profile.Info.Name))
-			log.Printf("Type: \t%s", profile.Info.Type)
-			log.Printf("Expiry: \t%s", profile.Info.Type)
-			log.Printf("Bundle ID: \t%s", profile.Info.BundleID)
+			log.Printf("Type: \t\t%s", profile.Info.Type)
+			log.Printf("Expiry: %s", profile.Info.Type)
+			log.Printf("Bundle ID: %s", profile.Info.BundleID)
 			log.Printf("Certificates:")
 			for _, cert := range profile.Info.DeveloperCertificates {
-				log.Printf("- %s (%s)", cert.CommonName, cert.Serial)
+				log.Printf("- %s [%s]", cert.CommonName, colorstring.Magenta(cert.Serial))
 			}
 		}
 		fmt.Println()
