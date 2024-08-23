@@ -353,13 +353,13 @@ func main() {
 		if configs.Verbose {
 			log.Debugf("%s", profile.Info.String(certificates...))
 		} else {
-			log.Printf("%s", colorstring.Cyan(profile.Info.Name))
+			log.Printf("%s", colorstring.Magenta(profile.Info.Name))
 			log.Printf("Type: \t\t%s", profile.Info.Type)
 			log.Printf("Expiry: %s", profile.Info.Type)
 			log.Printf("Bundle ID: %s", profile.Info.BundleID)
-			log.Printf("Certificates:")
+			log.Printf("Included certificates:")
 			for _, cert := range profile.Info.DeveloperCertificates {
-				log.Printf("- %s [%s]", cert.CommonName, colorstring.Magenta(cert.Serial))
+				log.Printf("- %s", cert.CommonName)
 			}
 		}
 		fmt.Println()

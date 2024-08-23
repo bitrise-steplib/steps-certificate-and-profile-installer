@@ -59,6 +59,7 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 | `default_certificate_url` | URL of the default certificate.  You can specify a local path as well, using the `file://` scheme. For example `file://./Cert.p12`  | sensitive | `$BITRISE_DEFAULT_CERTIFICATE_URL` |
 | `default_certificate_passphrase` | Passphrase of the default Certificate.  | sensitive | `$BITRISE_DEFAULT_CERTIFICATE_PASSPHRASE` |
 | `default_provisioning_profile_url` | URL of the default provisioning profile to download.  You can specify a local path as well, using the `file://` scheme. For example `file://./BuildAnything.mobileprovision`  | sensitive | `$BITRISE_DEFAULT_PROVISION_URL` |
+| `verbose` | Enable logging additional information for troubleshooting | required | `false` |
 </details>
 
 <details>
