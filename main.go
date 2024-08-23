@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/bitrise-io/go-steputils/input"
@@ -14,6 +15,7 @@ import (
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-xcode/certificateutil"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
@@ -35,6 +37,8 @@ type Config struct {
 
 	KeychainPath     string
 	KeychainPassword string
+
+	Verbose bool
 }
 
 func createConfigFromEnvs() Config {
@@ -50,6 +54,8 @@ func createConfigFromEnvs() Config {
 
 		KeychainPath:     os.Getenv("keychain_path"),
 		KeychainPassword: os.Getenv("keychain_password"),
+
+		Verbose: os.Getenv("verbose") == "true",
 	}
 }
 
@@ -102,7 +108,7 @@ func secureInput(str string) string {
 
 func (c Config) print() {
 	fmt.Println()
-	log.Infof("Configs:")
+	log.Infof("Inputs:")
 	log.Printf(" - CertificateURL: %s", secureInput(c.CertificateURL))
 	log.Printf(" - CertificatePassphrase: %s", secureInput(c.CertificatePassphrase))
 	log.Printf(" - ProvisioningProfileURL: %s", secureInput(c.ProvisioningProfileURL))
@@ -179,10 +185,10 @@ func appendWithoutDuplicatesAndKeepOrder(items []string, item string) []string {
 }
 
 func printCertificateInfo(info certificateutil.CertificateInfoModel) {
-	log.Donef(info.CommonName)
-	log.Printf("serial: %s", info.Serial)
-	log.Printf("team: %s (%s)", info.TeamName, info.TeamID)
-	log.Printf("expiry: %s", info.EndDate)
+	log.Printf(colorstring.Magenta(info.CommonName))
+	log.Printf("Serial: %s", info.Serial)
+	log.Printf("Team: \t%s (%s)", info.TeamName, info.TeamID)
+	log.Printf("Expiry: %s", info.EndDate)
 
 	if err := info.CheckValidity(); err != nil {
 		log.Errorf("[X] %s", err)
@@ -203,8 +209,10 @@ func main() {
 	configs := createConfigFromEnvs()
 	configs.print()
 	if err := configs.validate(); err != nil {
-		failF("Issue with input: %s", err)
+		failF("Issue with inputs: %s", err)
 	}
+	log.SetEnableDebugLog(configs.Verbose)
+	
 	fmt.Println()
 
 	// Collect Certificates
@@ -274,8 +282,9 @@ func main() {
 
 	retryHTTPClient := retry.NewHTTPClient()
 	retryHTTPClient.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+		log.Debugf("HTTP retry: %s", err)
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			log.Debugf("Received HTTP 404, retrying request...")
+			log.Debugf("Received HTTP 404, retrying request: %s %s", resp.Request.Method, resp.Request.URL)
 			return true, nil
 		}
 
@@ -287,20 +296,27 @@ func main() {
 	assetInstaller := codesignasset.NewWriter(*keychainWriter)
 
 	fmt.Println()
-	log.Infof("Downloading Certificate(s)...")
+	log.Infof("Downloading Certificates...")
 
+	certDownloadStart := time.Now()
 	certificates, err := certDownloader.GetCertificates()
 	if err != nil {
 		failE(fmt.Errorf("Download failed: %w", err))
 	}
 
-	log.Printf("%d Certificate(s) downloaded.", len(certificates))
+	log.Printf("Download took %s", time.Since(certDownloadStart).Round(time.Millisecond))
+	if len(certificates) == 1 {
+		log.Donef("1 certificate downloaded")
+	} else {
+		log.Donef("%d certificates downloaded", len(certificates))
+	}
 
 	fmt.Println()
-	log.Infof("Installing downloaded Certificates")
+	log.Infof("Installing downloaded certificates...")
 
+	certInstallStart := time.Now()
 	for i, cert := range certificates {
-		log.Printf("%d/%d Certificate:", i+1, len(certificates))
+		log.Printf("%d/%d:", i+1, len(certificates))
 		printCertificateInfo(cert)
 
 		if err := assetInstaller.InstallCertificate(cert); err != nil {
@@ -309,27 +325,49 @@ func main() {
 
 		fmt.Println()
 	}
+	log.Printf("Installation took %s", time.Since(certInstallStart).Round(time.Millisecond))
+	log.Donef("Certificates installed.")
 
 	fmt.Println()
-	log.Infof("Downloading Provisioning Profile(s)...")
+	log.Infof("Downloading Provisioning Profiles...")
 
+	profileDownloadStart := time.Now()
 	profiles, err := profileDownloader.GetProfiles()
 	if err != nil {
 		failE(fmt.Errorf("Download failed: %w", err))
 	}
+	log.Printf("Download took %s", time.Since(profileDownloadStart).Round(time.Millisecond))
 
-	log.Printf("%d Provisioning Profile(s) downloaded.", len(profiles))
+	if len(profiles) == 1 {
+		log.Donef("1 Provisioning Profile downloaded.")
+	} else {
+		log.Donef("%d Provisioning Profiles downloaded.", len(profiles))
+	}
 
 	fmt.Println()
-	log.Infof("Installing Provisioning Profile(s)")
+	log.Infof("Installing Provisioning Profiles...")
 
+	profileInstallStart := time.Now()
 	for i, profile := range profiles {
-		log.Printf("%d/%d Provisioning Profile:", i+1, len(profiles))
-		log.Printf("%s", profile.Info.String(certificates...))
+		log.Printf("%d/%d:", i+1, len(profiles))
+		if configs.Verbose {
+			log.Debugf("%s", profile.Info.String(certificates...))
+		} else {
+			log.Printf("%s", colorstring.Magenta(profile.Info.Name))
+			log.Printf("Type: \t\t%s", profile.Info.Type)
+			log.Printf("Expiry: \t%s", profile.Info.ExpirationDate)
+			log.Printf("Bundle ID: \t%s", profile.Info.BundleID)
+			log.Printf("Included certificates:")
+			for _, cert := range profile.Info.DeveloperCertificates {
+				log.Printf("- %s", cert.CommonName)
+			}
+		}
 		fmt.Println()
 
 		if err := assetInstaller.InstallProfile(profile.Profile); err != nil {
 			failE(fmt.Errorf("Failed to install Provisioning Profile: %w", err))
 		}
 	}
+	log.Printf("Installation took %s", time.Since(profileInstallStart).Round(time.Millisecond))
+	log.Donef("Provisioning Profiles installed.")
 }
