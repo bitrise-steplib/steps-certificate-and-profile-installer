@@ -135,3 +135,11 @@ inputs:
       You can specify a local path as well, using the `file://` scheme.
       For example `file://./BuildAnything.mobileprovision`
     is_sensitive: true
+- verbose: "false"
+  opts:
+    title: Verbose logging
+    summary: Enable logging additional information for troubleshooting
+    is_required: true
+    value_options:
+    - "true"
+    - "false"
