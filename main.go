@@ -185,7 +185,7 @@ func appendWithoutDuplicatesAndKeepOrder(items []string, item string) []string {
 }
 
 func printCertificateInfo(info certificateutil.CertificateInfoModel) {
-	log.Printf(colorstring.Cyan(info.CommonName))
+	log.Printf(colorstring.Magenta(info.CommonName))
 	log.Printf("Serial: %s", info.Serial)
 	log.Printf("Team: \t%s (%s)", info.TeamName, info.TeamID)
 	log.Printf("Expiry: %s", info.EndDate)
