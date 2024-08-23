@@ -3,6 +3,7 @@ module github.com/bitrise-steplib/steps-certificate-and-profile-installer
 go 1.20
 
 require (
+	github.com/bitrise-io/colorstring v0.0.0-20180614154802-a8cd70115192
 	github.com/bitrise-io/go-steputils v1.0.5
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.18
 	github.com/bitrise-io/go-utils v1.0.12
