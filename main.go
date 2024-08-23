@@ -354,9 +354,9 @@ func main() {
 			log.Debugf("%s", profile.Info.String(certificates...))
 		} else {
 			log.Printf("%s", colorstring.Magenta(profile.Info.Name))
-			log.Printf("Type: \t%s", profile.Info.Type)
+			log.Printf("Type: \t\t%s", profile.Info.Type)
 			log.Printf("Expiry: \t%s", profile.Info.ExpirationDate)
-			log.Printf("Bundle ID: %s", profile.Info.BundleID)
+			log.Printf("Bundle ID: \t%s", profile.Info.BundleID)
 			log.Printf("Included certificates:")
 			for _, cert := range profile.Info.DeveloperCertificates {
 				log.Printf("- %s", cert.CommonName)
