@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-// Config ...
+// Config om...
 type Config struct {
 	CertificateURL         string
 	CertificatePassphrase  string
@@ -212,7 +212,7 @@ func main() {
 		failF("Issue with inputs: %s", err)
 	}
 	log.SetEnableDebugLog(configs.Verbose)
-	
+
 	fmt.Println()
 
 	// Collect Certificates
