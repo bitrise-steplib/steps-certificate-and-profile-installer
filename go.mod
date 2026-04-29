@@ -1,6 +1,6 @@
 module github.com/bitrise-steplib/steps-certificate-and-profile-installer
 
-go 1.20
+go 1.24.0
 
 require (
 	github.com/bitrise-io/go-steputils v1.0.5
@@ -24,7 +24,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.0 // indirect
 )
