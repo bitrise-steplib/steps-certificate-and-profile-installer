@@ -5,10 +5,10 @@ github.com/bitrise-io/go-pkcs12/internal/rc2
 # github.com/bitrise-io/go-steputils v1.0.5
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/input
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.18
-## explicit; go 1.17
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.50
+## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/stepconf
-# github.com/bitrise-io/go-utils v1.0.12
+# github.com/bitrise-io/go-utils v1.0.13
 ## explicit; go 1.13
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -20,11 +20,17 @@ github.com/bitrise-io/go-utils/log
 github.com/bitrise-io/go-utils/pathutil
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19
-## explicit; go 1.17
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.34
+## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
+github.com/bitrise-io/go-utils/v2/filedownloader
+github.com/bitrise-io/go-utils/v2/fileutil
+github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
+github.com/bitrise-io/go-utils/v2/parseutil
+github.com/bitrise-io/go-utils/v2/pathutil
+github.com/bitrise-io/go-utils/v2/retryhttp
 # github.com/bitrise-io/go-xcode v1.0.18
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/certificateutil
@@ -70,11 +76,11 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/stretchr/objx v0.5.1
-## explicit; go 1.13
-github.com/stretchr/objx
-# github.com/stretchr/testify v1.8.4
+# github.com/stretchr/objx v0.5.2
 ## explicit; go 1.20
+github.com/stretchr/objx
+# github.com/stretchr/testify v1.9.0
+## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
