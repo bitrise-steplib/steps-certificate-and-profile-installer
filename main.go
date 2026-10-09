@@ -219,6 +219,13 @@ func printCertificateInfo(logger log.Logger, info certificateutil.CertificateInf
 	}
 }
 
+func printCertificateList(logger log.Logger, certificates []certificateutil.CertificateInfoModel) {
+	for i, cert := range certificates {
+		logger.Printf("%d/%d:", i+1, len(certificates))
+		printCertificateInfo(logger, cert)
+	}
+}
+
 func failF(logger log.Logger, format string, v ...interface{}) {
 	logger.Errorf(format, v...)
 	os.Exit(1)
@@ -361,15 +368,13 @@ func main() {
 	if len(duplicatedCertificates) > 0 {
 		fmt.Println()
 		if configs.DeduplicateCertificates {
-			logger.Warnf("Skipping certificates with the same name as another certificate:")
+			logger.Warnf("Skipping Certificates with the same name as another Certificate:")
 		} else {
-			logger.Warnf("Multiple certificates with the same name provided, Xcode might select one not included in the provisioning profile. Certificates that would be skipped by deduplication:")
+			logger.Warnf("Multiple Certificates with the same name provided, Xcode might select one not included in the Provisioning Profile. Certificates that would be skipped by deduplication:")
 		}
-		for _, cert := range duplicatedCertificates {
-			logger.Warnf("- %s (serial: %s, expiry: %s)", cert.CommonName, cert.Serial, cert.EndDate)
-		}
+		printCertificateList(logger, duplicatedCertificates)
 		if configs.DeduplicateCertificates {
-			logger.Printf("From certificates with the same name, the ones included in a provisioning profile are installed. If none of them is included, the valid one expiring the latest is installed.")
+			logger.Printf("From Certificates with the same name, the ones included in a Provisioning Profile are installed. If none of them is included, the valid one expiring the latest is installed.")
 			certificates = dedupedCertificates
 		} else {
 			logger.Printf("Set the Deduplicate certificates (deduplicate_certificates) input to true to skip them.")
@@ -377,10 +382,8 @@ func main() {
 	}
 	if len(ambiguousCertificates) > 0 {
 		fmt.Println()
-		logger.Warnf("Multiple certificates with the same name are included in provisioning profiles, all of them are installed. Xcode might select one not included in the provisioning profile used for signing:")
-		for _, cert := range ambiguousCertificates {
-			logger.Warnf("- %s (serial: %s, expiry: %s)", cert.CommonName, cert.Serial, cert.EndDate)
-		}
+		logger.Warnf("Multiple Certificates with the same name are included in Provisioning Profiles, all of them are installed. Xcode might select one not included in the Provisioning Profile used for signing:")
+		printCertificateList(logger, ambiguousCertificates)
 	}
 
 	fmt.Println()
