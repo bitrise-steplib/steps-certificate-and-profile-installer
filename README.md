@@ -59,6 +59,7 @@ You can also run this step directly with [Bitrise CLI](https://github.com/bitris
 | `default_certificate_url` | URL of the default certificate.  You can specify a local path as well, using the `file://` scheme. For example `file://./Cert.p12`  | sensitive | `$BITRISE_DEFAULT_CERTIFICATE_URL` |
 | `default_certificate_passphrase` | Passphrase of the default Certificate.  | sensitive | `$BITRISE_DEFAULT_CERTIFICATE_PASSPHRASE` |
 | `default_provisioning_profile_url` | URL of the default provisioning profile to download.  You can specify a local path as well, using the `file://` scheme. For example `file://./BuildAnything.mobileprovision`  | sensitive | `$BITRISE_DEFAULT_PROVISION_URL` |
+| `deduplicate_certificates` | If enabled, certificates sharing their common name with another certificate are skipped, unless a provisioning profile includes them.  Xcode selects code signing identities by name, so multiple certificates with the same name might make it select one that is not included in the provisioning profile.  From certificates with the same name, the ones included in a provisioning profile are installed. If none of them is included in a profile, the valid one expiring the latest is installed. | required | `false` |
 | `verbose` | Enable logging additional information for troubleshooting | required | `false` |
 </details>
 
