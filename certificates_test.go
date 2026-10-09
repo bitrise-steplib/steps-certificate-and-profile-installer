@@ -63,7 +63,7 @@ func TestDeduplicateCertificates(t *testing.T) {
 			certificates:  []certificateutil.CertificateInfoModel{devNewer, devOlder},
 			profiles:      []profileutil.ProvisioningProfileInfoModel{newProfile(devOlder), newProfile(devNewer)},
 			wantKept:      []certificateutil.CertificateInfoModel{devNewer, devOlder},
-			wantAmbiguous: []certificateutil.CertificateInfoModel{devOlder},
+			wantAmbiguous: []certificateutil.CertificateInfoModel{devNewer, devOlder},
 		},
 		{
 			name:          "keeps all certificates included in the same profile, drops the one not included",
@@ -71,7 +71,7 @@ func TestDeduplicateCertificates(t *testing.T) {
 			profiles:      []profileutil.ProvisioningProfileInfoModel{newProfile(devOlder, devNewer)},
 			wantKept:      []certificateutil.CertificateInfoModel{devNewer, devOlder},
 			wantDropped:   []certificateutil.CertificateInfoModel{devExpired},
-			wantAmbiguous: []certificateutil.CertificateInfoModel{devOlder},
+			wantAmbiguous: []certificateutil.CertificateInfoModel{devNewer, devOlder},
 		},
 		{
 			name:         "prefers valid over expired",

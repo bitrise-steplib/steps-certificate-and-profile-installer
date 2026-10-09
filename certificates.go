@@ -8,7 +8,7 @@ import (
 // deduplicateCertificates drops certificates sharing their common name with another one,
 // as Xcode selects identities by name and might pick one not included in the profile.
 // Certificates included in a profile are always kept; if none is, the latest expiring valid one is kept.
-// Same-named certificates kept because of profiles are returned as ambiguous. Input order is preserved.
+// Same-named certificates all kept because of profiles are also returned as ambiguous. Input order is preserved.
 func deduplicateCertificates(certificates []certificateutil.CertificateInfoModel, profiles []profileutil.ProvisioningProfileInfoModel) (kept, dropped, ambiguous []certificateutil.CertificateInfoModel) {
 	profileCertFingerprints := map[string]bool{}
 	for _, profile := range profiles {
@@ -28,16 +28,16 @@ func deduplicateCertificates(certificates []certificateutil.CertificateInfoModel
 		unique = append(unique, cert)
 	}
 
-	nameHasProfileCert := map[string]bool{}
+	profileCertCountByName := map[string]int{}
 	for _, cert := range unique {
 		if profileCertFingerprints[cert.SHA1Fingerprint] {
-			nameHasProfileCert[cert.CommonName] = true
+			profileCertCountByName[cert.CommonName]++
 		}
 	}
 
 	bestByName := map[string]int{}
 	for i, cert := range unique {
-		if nameHasProfileCert[cert.CommonName] {
+		if profileCertCountByName[cert.CommonName] > 0 {
 			continue
 		}
 		best, ok := bestByName[cert.CommonName]
@@ -46,17 +46,15 @@ func deduplicateCertificates(certificates []certificateutil.CertificateInfoModel
 		}
 	}
 
-	keptProfileCertByName := map[string]bool{}
 	for i, cert := range unique {
-		if nameHasProfileCert[cert.CommonName] {
+		if count := profileCertCountByName[cert.CommonName]; count > 0 {
 			if !profileCertFingerprints[cert.SHA1Fingerprint] {
 				dropped = append(dropped, cert)
 				continue
 			}
-			if keptProfileCertByName[cert.CommonName] {
+			if count > 1 {
 				ambiguous = append(ambiguous, cert)
 			}
-			keptProfileCertByName[cert.CommonName] = true
 			kept = append(kept, cert)
 			continue
 		}
