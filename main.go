@@ -16,6 +16,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log/colorstring"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/bitrise-io/go-xcode/certificateutil"
+	"github.com/bitrise-io/go-xcode/profileutil"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/certdownloader"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/codesignasset"
 	"github.com/bitrise-io/go-xcode/v2/autocodesign/keychain"
@@ -37,7 +38,8 @@ type Config struct {
 	KeychainPath     string
 	KeychainPassword string
 
-	Verbose bool
+	DeduplicateCertificates bool
+	Verbose                 bool
 }
 
 func createConfigFromEnvs() Config {
@@ -54,7 +56,8 @@ func createConfigFromEnvs() Config {
 		KeychainPath:     os.Getenv("keychain_path"),
 		KeychainPassword: os.Getenv("keychain_password"),
 
-		Verbose: os.Getenv("verbose") == "true",
+		DeduplicateCertificates: os.Getenv("deduplicate_certificates") == "true",
+		Verbose:                 os.Getenv("verbose") == "true",
 	}
 }
 
@@ -119,6 +122,7 @@ func (c Config) print(logger log.Logger) {
 
 	logger.Printf(" - KeychainPath: %s", c.KeychainPath)
 	logger.Printf(" - KeychainPassword: %s", secureInput(c.KeychainPassword))
+	logger.Printf(" - DeduplicateCertificates: %t", c.DeduplicateCertificates)
 }
 
 func validateNotEmpty(value string) error {
@@ -212,6 +216,13 @@ func printCertificateInfo(logger log.Logger, info certificateutil.CertificateInf
 
 	if err := info.CheckValidity(); err != nil {
 		logger.Errorf("[X] %s", err)
+	}
+}
+
+func printCertificateList(logger log.Logger, certificates []certificateutil.CertificateInfoModel) {
+	for i, cert := range certificates {
+		logger.Printf("%d/%d:", i+1, len(certificates))
+		printCertificateInfo(logger, cert)
 	}
 }
 
@@ -334,6 +345,48 @@ func main() {
 	}
 
 	fmt.Println()
+	logger.Infof("Downloading Provisioning Profiles...")
+
+	profileDownloadStart := time.Now()
+	profiles, err := profileDownloader.GetProfiles()
+	if err != nil {
+		failE(logger, fmt.Errorf("Download failed: %w", err))
+	}
+	logger.Printf("Download took %s", time.Since(profileDownloadStart).Round(time.Millisecond))
+
+	if len(profiles) == 1 {
+		logger.Donef("1 Provisioning Profile downloaded.")
+	} else {
+		logger.Donef("%d Provisioning Profiles downloaded.", len(profiles))
+	}
+
+	var profileInfos []profileutil.ProvisioningProfileInfoModel
+	for _, profile := range profiles {
+		profileInfos = append(profileInfos, profile.Info)
+	}
+	dedupedCertificates, duplicatedCertificates, ambiguousCertificates := deduplicateCertificates(certificates, profileInfos)
+	if len(duplicatedCertificates) > 0 {
+		fmt.Println()
+		if configs.DeduplicateCertificates {
+			logger.Warnf("Skipping duplicated Certificates:")
+		} else {
+			logger.Warnf("Duplicated Certificates (same name), Xcode might select one not in the Provisioning Profile:")
+		}
+		printCertificateList(logger, duplicatedCertificates)
+		if configs.DeduplicateCertificates {
+			logger.Printf("Kept the ones included in a Provisioning Profile, or the latest expiring valid one.")
+			certificates = dedupedCertificates
+		} else {
+			logger.Printf("Set deduplicate_certificates to true to skip them.")
+		}
+	}
+	if len(ambiguousCertificates) > 0 {
+		fmt.Println()
+		logger.Warnf("Duplicated Certificates (same name) included in Provisioning Profiles, installing all, Xcode might select the wrong one:")
+		printCertificateList(logger, ambiguousCertificates)
+	}
+
+	fmt.Println()
 	logger.Infof("Installing downloaded certificates...")
 
 	certInstallStart := time.Now()
@@ -349,22 +402,6 @@ func main() {
 	}
 	logger.Printf("Installation took %s", time.Since(certInstallStart).Round(time.Millisecond))
 	logger.Donef("Certificates installed.")
-
-	fmt.Println()
-	logger.Infof("Downloading Provisioning Profiles...")
-
-	profileDownloadStart := time.Now()
-	profiles, err := profileDownloader.GetProfiles()
-	if err != nil {
-		failE(logger, fmt.Errorf("Download failed: %w", err))
-	}
-	logger.Printf("Download took %s", time.Since(profileDownloadStart).Round(time.Millisecond))
-
-	if len(profiles) == 1 {
-		logger.Donef("1 Provisioning Profile downloaded.")
-	} else {
-		logger.Donef("%d Provisioning Profiles downloaded.", len(profiles))
-	}
 
 	fmt.Println()
 	logger.Infof("Installing Provisioning Profiles...")

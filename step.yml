@@ -136,6 +136,20 @@ inputs:
       You can specify a local path as well, using the `file://` scheme.
       For example `file://./BuildAnything.mobileprovision`
     is_sensitive: true
+- deduplicate_certificates: "false"
+  opts:
+    title: Deduplicate certificates
+    summary: Skip installing certificates that share their name with another certificate.
+    description: |-
+      If enabled, certificates sharing their common name with another certificate are skipped, unless a provisioning profile includes them.
+
+      Xcode selects code signing identities by name, so multiple certificates with the same name might make it select one that is not included in the provisioning profile.
+
+      From certificates with the same name, the ones included in a provisioning profile are installed. If none of them is included in a profile, the valid one expiring the latest is installed.
+    is_required: true
+    value_options:
+    - "true"
+    - "false"
 - verbose: "false"
   opts:
     title: Verbose logging
