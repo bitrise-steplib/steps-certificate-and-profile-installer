@@ -368,21 +368,21 @@ func main() {
 	if len(duplicatedCertificates) > 0 {
 		fmt.Println()
 		if configs.DeduplicateCertificates {
-			logger.Warnf("Skipping Certificates with the same name as another Certificate:")
+			logger.Warnf("Skipping duplicated Certificates:")
 		} else {
-			logger.Warnf("Multiple Certificates with the same name provided, Xcode might select one not included in the Provisioning Profile. Certificates that would be skipped by deduplication:")
+			logger.Warnf("Duplicated Certificates (same name), Xcode might select one not in the Provisioning Profile:")
 		}
 		printCertificateList(logger, duplicatedCertificates)
 		if configs.DeduplicateCertificates {
-			logger.Printf("From Certificates with the same name, the ones included in a Provisioning Profile are installed. If none of them is included, the valid one expiring the latest is installed.")
+			logger.Printf("Kept the ones included in a Provisioning Profile, or the latest expiring valid one.")
 			certificates = dedupedCertificates
 		} else {
-			logger.Printf("Set the Deduplicate certificates (deduplicate_certificates) input to true to skip them.")
+			logger.Printf("Set deduplicate_certificates to true to skip them.")
 		}
 	}
 	if len(ambiguousCertificates) > 0 {
 		fmt.Println()
-		logger.Warnf("Multiple Certificates with the same name are included in Provisioning Profiles, all of them are installed. Xcode might select one not included in the Provisioning Profile used for signing:")
+		logger.Warnf("Duplicated Certificates (same name) included in Provisioning Profiles, installing all, Xcode might select the wrong one:")
 		printCertificateList(logger, ambiguousCertificates)
 	}
 
